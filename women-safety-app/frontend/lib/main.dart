@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'core/constants/app_themes.dart';
-import 'features/onboarding/views/onboarding_screen.dart';
+import 'core/widgets/main_navigation.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,7 +16,7 @@ class HerEraApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'HerEra Safety',
       theme: AppTheme.lightTheme,
-      home: const OnboardingScreen(),
+      home: const MainNavigation(),
     );
   }
 }

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>herERA - Profile & Settings</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div class="mobile-container">
+        <header>
+            <div class="frosted-pill">
+                <span class="greeting">Hi Graceful</span>
+            </div>
+        </header>
+
+        <main class="scrollable-content">
+            <!-- 1. SOS Preferences (Critical - Positioned Higher) -->
+            <section class="glass-card collapsible" id="sos-preferences">
+                <div class="card-header">
+                    <div class="header-title">
+                        <i data-lucide="alert-circle" class="icon-red"></i>
+                        <h3>SOS Preferences</h3>
+                    </div>
+                    <i data-lucide="chevron-down" class="chevron"></i>
+                </div>
+                <div class="card-content">
+                    <div class="setting-item">
+                        <label>Auto-call Emergency Services</label>
+                        <label class="switch">
+                            <input type="checkbox" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item vertical">
+                        <label>Custom SOS Message</label>
+                        <textarea placeholder="I need help! My location is shared with you.">I am in an emergency. Please help! My current location is being shared.</textarea>
+                    </div>
+                    <div class="setting-item vertical">
+                        <label>Trigger Options</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-container">Shake phone to trigger
+                                <input type="checkbox" checked>
+                                <span class="checkmark"></span>
+                            </label>
+                            <label class="checkbox-container">Press power button 5 times
+                                <input type="checkbox" checked>
+                                <span class="checkmark"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. Emergency Helpline Numbers -->
+            <section class="glass-card collapsible" id="helplines">
+                <div class="card-header">
+                    <div class="header-title">
+                        <i data-lucide="phone-call" class="icon-mint"></i>
+                        <h3>Emergency Helplines</h3>
+                    </div>
+                    <i data-lucide="chevron-down" class="chevron"></i>
+                </div>
+                <div class="card-content">
+                    <div class="helpline-grid">
+                        <button class="helpline-btn">
+                            <i data-lucide="shield"></i>
+                            <span>Police (100)</span>
+                        </button>
+                        <button class="helpline-btn">
+                            <i data-lucide="ambulance"></i>
+                            <span>Ambulance (102)</span>
+                        </button>
+                        <button class="helpline-btn">
+                            <i data-lucide="contact"></i>
+                            <span>Women Helpline (1091)</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. Basic Personal Information -->
+            <section class="glass-card collapsible" id="personal-info">
+                <div class="card-header">
+                    <div class="header-title">
+                        <i data-lucide="user" class="icon-purple"></i>
+                        <h3>Basic Personal Info</h3>
+                    </div>
+                    <i data-lucide="chevron-down" class="chevron"></i>
+                </div>
+                <div class="card-content">
+                    <div class="info-item">
+                        <div class="label-val">
+                            <span class="label">Full Name</span>
+                            <span class="value">Graceful One</span>
+                        </div>
+                        <i data-lucide="edit-2" class="edit-icon"></i>
+                    </div>
+                    <div class="info-item">
+                        <div class="label-val">
+                            <span class="label">DOB / Age</span>
+                            <span class="value">12/05/1998 (27)</span>
+                        </div>
+                        <i data-lucide="edit-2" class="edit-icon"></i>
+                    </div>
+                    <div class="info-item">
+                        <div class="label-val">
+                            <span class="label">Phone</span>
+                            <span class="value">+91 98765 43210</span>
+                        </div>
+                        <i data-lucide="edit-2" class="edit-icon"></i>
+                    </div>
+                    <div class="info-item">
+                        <div class="label-val">
+                            <span class="label">Email</span>
+                            <span class="value">graceful@herera.com</span>
+                        </div>
+                        <i data-lucide="edit-2" class="edit-icon"></i>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. Emergency Contacts -->
+            <section class="glass-card collapsible" id="emergency-contacts">
+                <div class="card-header">
+                    <div class="header-title">
+                        <i data-lucide="users" class="icon-blue"></i>
+                        <h3>Emergency Contacts</h3>
+                    </div>
+                    <i data-lucide="plus-circle" class="add-icon"></i>
+                </div>
+                <div class="card-content">
+                    <div class="contact-item">
+                        <div class="contact-info">
+                            <span class="name">Sarah (Mother)</span>
+                            <span class="phone">+91 91234 56789</span>
+                        </div>
+                        <div class="actions">
+                            <i data-lucide="edit-2"></i>
+                            <i data-lucide="trash-2"></i>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 5. Location and Safety -->
+            <section class="glass-card collapsible" id="location-safety">
+                <div class="card-header">
+                    <div class="header-title">
+                        <i data-lucide="map-pin" class="icon-mint"></i>
+                        <h3>Location & Safety</h3>
+                    </div>
+                    <i data-lucide="chevron-down" class="chevron"></i>
+                </div>
+                <div class="card-content">
+                    <div class="setting-item">
+                        <label>Live Location Sharing</label>
+                        <label class="switch">
+                            <input type="checkbox">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div class="checkbox-container-wrapper">
+                        <label class="checkbox-container">Auto-share location on SOS
+                            <input type="checkbox" checked>
+                            <span class="checkmark"></span>
+                        </label>
+                    </div>
+                    <div class="trusted-locations">
+                        <p class="sub-label">Trusted Locations</p>
+                        <div class="location-tag"><i data-lucide="home"></i> Home</div>
+                        <div class="location-tag"><i data-lucide="briefcase"></i> Office</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 6. Privacy and Security -->
+            <section class="glass-card collapsible" id="privacy-security">
+                <div class="card-header">
+                    <div class="header-title">
+                        <i data-lucide="lock" class="icon-purple"></i>
+                        <h3>Privacy & Security</h3>
+                    </div>
+                    <i data-lucide="chevron-down" class="chevron"></i>
+                </div>
+                <div class="card-content">
+                    <div class="setting-item action-text">
+                        <span>Change Password</span>
+                        <i data-lucide="key-round"></i>
+                    </div>
+                    <div class="setting-item">
+                        <label>Biometric Auth</label>
+                        <i data-lucide="fingerprint" class="setting-icon"></i>
+                        <label class="switch">
+                            <input type="checkbox" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 7. Safety Activity History -->
+            <section class="glass-card collapsible" id="activity-history">
+                <div class="card-header">
+                    <div class="header-title">
+                        <i data-lucide="history" class="icon-blue"></i>
+                        <h3>Safety Activity History</h3>
+                    </div>
+                    <i data-lucide="chevron-down" class="chevron"></i>
+                </div>
+                <div class="card-content">
+                    <div class="history-item">
+                        <span class="activity">SOS Alert Triggered</span>
+                        <span class="time">Mar 08, 22:45</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 8. App Settings -->
+            <section class="glass-card collapsible" id="app-settings">
+                <div class="card-header">
+                    <div class="header-title">
+                        <i data-lucide="settings" class="icon-gray"></i>
+                        <h3>App Settings</h3>
+                    </div>
+                    <i data-lucide="chevron-down" class="chevron"></i>
+                </div>
+                <div class="card-content">
+                    <div class="setting-item">
+                        <label>Language</label>
+                        <select class="glass-select">
+                            <option>English</option>
+                            <option>Hindi</option>
+                        </select>
+                    </div>
+                    <div class="setting-item vertical">
+                        <label>Vibration Intensity</label>
+                        <input type="range" class="glass-range">
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+        <nav class="bottom-nav">
+            <i data-lucide="home"></i>
+            <i data-lucide="map-pin"></i>
+            <i data-lucide="shield"></i>
+            <i data-lucide="user" class="active"></i>
+        </nav>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>herERA - Women's Safety</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div class="mobile-container">
+        <header>
+            <h1 class="app-name">herERA</h1>
+            <h2 class="greeting">Hi Graceful</h2>
+        </header>
+
+        <main>
+            <div class="detection-center">
+                <div class="pulse-container">
+                    <div class="pulse-ring"></div>
+                    <div class="pulse-ring"></div>
+                    <div class="pulse-ring"></div>
+                    <div class="mic-icon-wrapper">
+                        <i data-lucide="mic" class="mic-icon"></i>
+                    </div>
+                </div>
+                <p class="status-text">Active Scream Detection</p>
+                
+                <button class="sos-button" id="sosTrigger">
+                    <span class="sos-text">SOS</span>
+                </button>
+            </div>
+
+            <section class="quick-actions-card">
+                <h3 class="card-title">Quick Actions</h3>
+                <div class="actions-grid">
+                    <div class="action-item">
+                        <div class="icon-circle safe-route">
+                            <i data-lucide="route"></i>
+                        </div>
+                        <span>Safe Route</span>
+                    </div>
+                    <div class="action-item">
+                        <div class="icon-circle evidence-locker">
+                            <i data-lucide="folder-lock"></i>
+                        </div>
+                        <span>Evidence Locker</span>
+                    </div>
+                    <div class="action-item">
+                        <div class="icon-circle ai-assistant">
+                            <i data-lucide="sparkles"></i>
+                        </div>
+                        <span>AI Assistant</span>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <nav class="bottom-nav">
+            <i data-lucide="home" class="active"></i>
+            <i data-lucide="map-pin"></i>
+            <i data-lucide="shield"></i>
+            <i data-lucide="user"></i>
+        </nav>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
