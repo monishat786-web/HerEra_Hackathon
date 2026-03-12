@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../features/home/views/home_screen.dart';
 import '../../features/map/views/map_screen.dart';
-import '../../features/profile/views/profile_screen.dart';
 import '../../features/community/views/community_screen.dart';
+import '../../features/evidence_locker/views/evidence_locker_screen.dart';
 import '../constants/app_colors.dart';
 import 'app_drawer.dart';
 
@@ -20,7 +20,7 @@ class _MainNavigationState extends State<MainNavigation> {
     const HomeScreen(),
     const MapScreen(),
     const CommunityScreen(),
-    const ProfileScreen(),
+    const EvidenceLockerScreen(),
   ];
 
   @override
@@ -80,9 +80,9 @@ class _MainNavigationState extends State<MainNavigation> {
                   label: "Community",
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.person_outline_rounded),
-                  activeIcon: Icon(Icons.person_rounded),
-                  label: "Profile",
+                  icon: Icon(Icons.inventory_2_outlined),
+                  activeIcon: Icon(Icons.inventory_2_rounded),
+                  label: "Vault",
                 ),
 ],
             ),

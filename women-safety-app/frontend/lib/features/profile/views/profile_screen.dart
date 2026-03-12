@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../evidence_locker/views/evidence_locker_screen.dart';
+import '../../activities/views/activities_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -41,9 +42,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _buildInfoTile(Icons.fingerprint_rounded, "Biometric Status", "Enabled & Verified", isVerified: true),
                   ]),
                   const SizedBox(height: 32),
-                  _buildSectionHeader("Safety Vault"),
+                  _buildSectionHeader("Safety Vault & History"),
                   const SizedBox(height: 16),
                   _buildVaultAccess(context),
+                  const SizedBox(height: 12),
+                  _buildActivitiesAccess(context),
                   const SizedBox(height: 32),
                   _buildSectionHeader("Emergency Contacts"),
                   const SizedBox(height: 16),
@@ -306,6 +309,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           IconButton(
             onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const EvidenceLockerScreen())),
+            icon: const Icon(Icons.arrow_forward_ios_rounded, size: 18, color: AppColors.primary),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActivitiesAccess(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.softPurpleBorder, width: 1.5),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(color: AppColors.mintGreen.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16)),
+            child: const Icon(Icons.history_rounded, color: AppColors.mintGreen),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("Location Activities", style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 15)),
+                Text("Daily timeline & history logs", style: GoogleFonts.inter(fontSize: 11, color: AppColors.textSecondary)),
+              ],
+            ),
+          ),
+          IconButton(
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ActivitiesScreen())),
             icon: const Icon(Icons.arrow_forward_ios_rounded, size: 18, color: AppColors.primary),
           ),
         ],

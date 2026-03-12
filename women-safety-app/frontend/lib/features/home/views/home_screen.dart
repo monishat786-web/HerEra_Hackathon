@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:record/record.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:flutter/services.dart';
 import 'dart:async';
 import '../../../core/constants/app_colors.dart';
 import 'sos_history_screen.dart';
@@ -25,10 +27,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   late AudioRecorder _recorder;
   StreamSubscription? _accelerometerSubscription;
   bool _isRecording = false;
+  bool _isLocationEnabled = true;
   double _dragOffset = 0.0;
-  static const double _dragThreshold = 100.0;
+  bool _showDragHint = false;
+  static const double _dragThreshold = 50.0;
   int _tapCount = 0;
   Timer? _tapTimer;
+  Timer? _shakeCountdownTimer;
+  int _shakeCountdown = 60;
+  bool _isScreamDetected = false;
+  StreamSubscription<Amplitude>? _amplitudeSubscription;
 
   @override
   void initState() {
@@ -47,32 +55,128 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _initSensors();
   }
 
+  Future<void> _startRecording() async {
+    if (await _recorder.hasPermission()) {
+      if (_isRecording) return;
+      
+      final directory = await getApplicationDocumentsDirectory();
+      final path = '${directory.path}/scream_evidence_${DateTime.now().millisecondsSinceEpoch}.m4a';
+      
+      await _recorder.start(const RecordConfig(encoder: AudioEncoder.aacLc), path: path);
+      
+      setState(() {
+        _isRecording = true;
+        _dragOffset = 0;
+      });
+
+      // Haptic confirmation
+      HapticFeedback.heavyImpact();
+      Future.delayed(const Duration(milliseconds: 100), () => HapticFeedback.heavyImpact());
+
+      // Start "Scream Detection" (Volume threshold for mockup)
+      _amplitudeSubscription = _recorder.onAmplitudeChanged(const Duration(milliseconds: 200)).listen((amp) {
+        if (amp.current > -15) { // Threshold for "distress"
+          if (!_isScreamDetected) {
+            setState(() => _isScreamDetected = true);
+            HapticFeedback.vibrate();
+            _showDistressNotification();
+          }
+        } else {
+          if (_isScreamDetected) {
+             setState(() => _isScreamDetected = false);
+          }
+        }
+      });
+
+    } else {
+      _showPermissionDeniedDialog();
+    }
+  }
+
+  void _showDistressNotification() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("⚠️ DISTRESS PATTERN DETECTED!"),
+        backgroundColor: AppColors.sosRed,
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _showPermissionDeniedDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Microphone Required"),
+        content: const Text("Enable microphone access to use scream detection and voice evidence recording."),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("OK")),
+        ],
+      ),
+    );
+  }
+
+  void _showLocationDisabledDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Location Disabled"),
+        content: const Text("Enable location to use SOS features."),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("OK")),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _stopRecordingAndTriggerSOS() async {
+    await _recorder.stop();
+    _amplitudeSubscription?.cancel();
+    _shakeCountdownTimer?.cancel();
+    _shakeCountdownTimer = null;
+    setState(() {
+      _isRecording = false;
+      _isScreamDetected = false;
+    });
+    _triggerSOS("Recording Stopped / Manual Trigger");
+  }
+
+  void _handleShakeDetection() {
+    if (_shakeCountdownTimer != null) return;
+    
+    _startRecording();
+    _shakeCountdown = 60;
+    _shakeCountdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) return;
+      setState(() {
+        if (_shakeCountdown > 0) {
+          _shakeCountdown--;
+        } else {
+          timer.cancel();
+          _shakeCountdownTimer = null;
+          _stopRecordingAndTriggerSOS();
+        }
+      });
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("SOS triggered by shake. Recording for 60s."),
+        backgroundColor: AppColors.sosRed,
+        duration: Duration(seconds: 3),
+      ),
+    );
+  }
+
   void _initSensors() {
     _accelerometerSubscription = userAccelerometerEventStream().listen((UserAccelerometerEvent event) {
-      // Simple shake detection logic
       double acceleration = event.x.abs() + event.y.abs() + event.z.abs();
-      if (acceleration > 30) {
-        _triggerSOS("Shake Detected");
+      if (acceleration > 35) {
+        _handleShakeDetection();
       }
     });
   }
 
-  Future<void> _startRecording() async {
-    if (await _recorder.hasPermission()) {
-      setState(() => _isRecording = true);
-      // In a real app, you'd specify a path
-      await _recorder.start(const RecordConfig(), path: ''); 
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Scream Detect: Recording Active"), backgroundColor: AppColors.primary),
-      );
-    }
-  }
-
-  Future<void> _stopRecording() async {
-    await _recorder.stop();
-    setState(() => _isRecording = false);
-  }
 
   void _triggerSOS(String source) {
     setState(() {
@@ -208,27 +312,34 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   Widget _buildLocationStatus() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-          width: 10,
-          height: 10,
-          decoration: const BoxDecoration(
-            color: AppColors.mintGreen,
-            shape: BoxShape.circle,
+    return GestureDetector(
+      onTap: () => setState(() => _isLocationEnabled = !_isLocationEnabled),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(
+              color: _isLocationEnabled ? AppColors.mintGreen : Colors.grey,
+              shape: BoxShape.circle,
+            ),
           ),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          "Location ON",
-          style: GoogleFonts.inter(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
+          const SizedBox(width: 8),
+          Text(
+            _isLocationEnabled ? "Location ON" : "Location OFF",
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: _isLocationEnabled ? AppColors.textPrimary : AppColors.textMuted,
+            ),
           ),
-        ),
-      ],
+          if (!_isLocationEnabled) ...[
+            const SizedBox(width: 4),
+            const Icon(Icons.lock_rounded, size: 14, color: AppColors.textMuted),
+          ],
+        ],
+      ),
     );
   }
 
@@ -278,59 +389,155 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
         // Main SOS Button
         GestureDetector(
-          onVerticalDragUpdate: (details) {
+          onLongPressStart: (details) {
+            if (!_isLocationEnabled) {
+              _showLocationDisabledDialog();
+              return;
+            }
+            HapticFeedback.mediumImpact();
+            setState(() => _showDragHint = true);
+          },
+          onLongPressMoveUpdate: (details) {
+            if (!_isLocationEnabled) return;
             setState(() {
-              _dragOffset += details.primaryDelta!;
+              _dragOffset = details.offsetFromOrigin.dy;
               if (_dragOffset > _dragThreshold && !_isRecording) {
                 _startRecording();
+                _showDragHint = false;
               }
             });
           },
-          onVerticalDragEnd: (details) {
+          onLongPressEnd: (details) {
             setState(() {
               _dragOffset = 0;
-              if (_isRecording) {
-                _stopRecording();
-              }
+              _showDragHint = false;
             });
           },
-          onTap: _handleSOSClick,
+          onTap: () {
+            if (!_isLocationEnabled) {
+              _showLocationDisabledDialog();
+              return;
+            }
+            if (_isRecording) {
+              _stopRecordingAndTriggerSOS();
+            } else {
+              _handleSOSClick();
+            }
+          },
           child: AnimatedBuilder(
             animation: _glowController,
             builder: (context, child) {
               return Stack(
                 alignment: Alignment.center,
+                clipBehavior: Clip.none,
                 children: [
+                   // Outer Pulse Ring
+                  if (_isRecording)
+                    AnimatedBuilder(
+                      animation: _pulseController,
+                      builder: (context, child) {
+                        return Container(
+                          width: 180 + (_pulseController.value * 40),
+                          height: 180 + (_pulseController.value * 40),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: (_isScreamDetected ? Colors.orange : AppColors.sosRed).withValues(alpha: 1 - _pulseController.value),
+                              width: 4,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+
                   Container(
                     width: 180,
                     height: 180,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: AppColors.sosRed,
+                      color: _isLocationEnabled ? AppColors.sosRed : Colors.grey[400],
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.sosRed.withValues(alpha: 0.3 + (_glowController.value * 0.2)),
+                          color: (_isLocationEnabled ? AppColors.sosRed : Colors.grey).withValues(alpha: 0.3 + (_glowController.value * 0.2)),
                           blurRadius: 30 + (_glowController.value * 15),
                           spreadRadius: 5 + (_glowController.value * 5),
                         ),
                       ],
-                      gradient: const RadialGradient(
-                        colors: [AppColors.sosRed, Color(0xFFB91C1C)],
-                        center: Alignment(-0.2, -0.2),
-                        radius: 0.6,
-                      ),
+                      gradient: _isLocationEnabled 
+                        ? const RadialGradient(
+                            colors: [AppColors.sosRed, Color(0xFFB91C1C)],
+                            center: Alignment(-0.2, -0.2),
+                            radius: 0.6,
+                          )
+                        : null,
                     ),
                     child: Center(
-                      child: Text(
-                        "SOS",
-                        style: GoogleFonts.quicksand(
-                          color: Colors.white,
-                          fontSize: 54,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          if (_isRecording)
+                             const Icon(Icons.mic_rounded, color: Colors.white, size: 32),
+                          Text(
+                            "SOS",
+                            style: GoogleFonts.quicksand(
+                              color: Colors.white,
+                              fontSize: 54,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
+
+                  if (!_isLocationEnabled)
+                    const Icon(Icons.lock_rounded, color: Colors.white54, size: 40),
+
+                  if (_showDragHint && _dragOffset < _dragThreshold)
+                    Positioned(
+                      bottom: -40,
+                      child: Column(
+                        children: [
+                          const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primary, size: 30),
+                          Text(
+                            "Drag to activate scream detection",
+                            style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primary),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  if (_isRecording)
+                    Positioned(
+                      bottom: -60,
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                               Container(
+                                 width: 8,
+                                 height: 8,
+                                 decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                               ),
+                               const SizedBox(width: 8),
+                               Text(
+                                 _shakeCountdownTimer != null 
+                                   ? "Shake SOS: ${_shakeCountdown}s" 
+                                   : "🎤 Recording...",
+                                 style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: AppColors.sosRed),
+                               ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            "Tap to stop & send SOS",
+                            style: GoogleFonts.inter(fontSize: 11, color: AppColors.textSecondary),
+                          ),
+                        ],
+                      ),
+                    ),
+
                   if (_tapCount > 0)
                     Positioned(
                       top: 0,
