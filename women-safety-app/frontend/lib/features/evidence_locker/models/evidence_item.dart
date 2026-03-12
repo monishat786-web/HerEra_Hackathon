@@ -1,4 +1,4 @@
-enum EvidenceType { audio, video, photo, location }
+enum EvidenceType { audio, video, photo, location, other }
 
 class EvidenceItem {
   final String id;
@@ -7,6 +7,7 @@ class EvidenceItem {
   final DateTime timestamp;
   final String? location;
   final String? description;
+  final bool isSynced;
 
   EvidenceItem({
     required this.id,
@@ -15,6 +16,7 @@ class EvidenceItem {
     required this.timestamp,
     this.location,
     this.description,
+    this.isSynced = false,
   });
 
   Map<String, dynamic> toMap() {
@@ -25,6 +27,7 @@ class EvidenceItem {
       'timestamp': timestamp.toIso8601String(),
       'location': location,
       'description': description,
+      'isSynced': isSynced,
     };
   }
 
@@ -36,6 +39,19 @@ class EvidenceItem {
       timestamp: DateTime.parse(map['timestamp']),
       location: map['location'],
       description: map['description'],
+      isSynced: map['isSynced'] ?? false,
+    );
+  }
+
+  EvidenceItem copyWith({bool? isSynced}) {
+    return EvidenceItem(
+      id: id,
+      type: type,
+      path: path,
+      timestamp: timestamp,
+      location: location,
+      description: description,
+      isSynced: isSynced ?? this.isSynced,
     );
   }
 }

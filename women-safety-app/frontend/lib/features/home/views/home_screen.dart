@@ -91,6 +91,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   void _showDistressNotification() {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text("⚠️ DISTRESS PATTERN DETECTED!"),
@@ -140,6 +141,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     if (path != null) {
       await _saveAudioEvidence(path);
     }
+    if (!mounted) return;
     _triggerSOS("Recording Stopped / Manual Trigger");
   }
 
@@ -200,16 +202,31 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   void _handleSOSClick() {
-    setState(() {
-      _tapCount++;
-      _tapTimer?.cancel();
-      _tapTimer = Timer(const Duration(seconds: 2), () {
-        setState(() => _tapCount = 0);
+    if (_isRecording) {
+      // Double-tap to stop recording
+      setState(() {
+        _tapCount++;
+        _tapTimer?.cancel();
+        _tapTimer = Timer(const Duration(milliseconds: 400), () {
+          if (_tapCount >= 2) {
+            _stopRecordingAndTriggerSOS();
+          }
+          setState(() => _tapCount = 0);
+        });
       });
-    });
+    } else {
+      // Triple-tap to trigger normal SOS
+      setState(() {
+        _tapCount++;
+        _tapTimer?.cancel();
+        _tapTimer = Timer(const Duration(seconds: 2), () {
+          setState(() => _tapCount = 0);
+        });
+      });
 
-    if (_tapCount >= 3) {
-      _triggerSOS("Triple Tap");
+      if (_tapCount >= 3) {
+        _triggerSOS("Triple Tap");
+      }
     }
   }
 
@@ -431,11 +448,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               _showLocationDisabledDialog();
               return;
             }
-            if (_isRecording) {
-              _stopRecordingAndTriggerSOS();
-            } else {
-              _handleSOSClick();
-            }
+            _handleSOSClick();
           },
           child: AnimatedBuilder(
             animation: _glowController,
