@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../features/home/views/home_screen.dart';
 import '../../features/map/views/map_screen.dart';
-import '../../features/community/views/community_screen.dart';
+import '../../features/evidence_locker/views/evidence_locker_screen.dart';
+import '../../features/profile/views/profile_screen.dart';
+import '../../features/guardian/views/guardian_call_screen.dart';
 import '../constants/app_colors.dart';
+import 'app_drawer.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -17,41 +20,52 @@ class _MainNavigationState extends State<MainNavigation> {
   final List<Widget> _screens = [
     const HomeScreen(),
     const MapScreen(),
-    const CommunityScreen(),
+    const GuardianCallScreen(),
+    const EvidenceLockerScreen(),
+    const ProfileScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       extendBody: true,
+      drawer: const AppDrawer(),
       body: _screens[_currentIndex],
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.background,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 20,
+              offset: const Offset(0, -10),
             ),
           ],
         ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) => setState(() => _currentIndex = index),
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.white,
-          elevation: 0,
-          showUnselectedLabels: true,
-          selectedItemColor: AppColors.primaryDeep,
-          unselectedItemColor: AppColors.textMuted,
-          selectedIconTheme: const IconThemeData(size: 28),
-          unselectedIconTheme: const IconThemeData(size: 24),
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home_rounded), label: "Home"),
-            BottomNavigationBarItem(icon: Icon(Icons.map_outlined), activeIcon: Icon(Icons.map_rounded), label: "Map"),
-            BottomNavigationBarItem(icon: Icon(Icons.people_outline), activeIcon: Icon(Icons.people_rounded), label: "Community"),
-          ],
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: BottomNavigationBar(
+              currentIndex: _currentIndex,
+              onTap: (index) => setState(() => _currentIndex = index),
+              type: BottomNavigationBarType.fixed,
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              showSelectedLabels: true,
+              showUnselectedLabels: true,
+              selectedItemColor: AppColors.primary,
+              unselectedItemColor: AppColors.textMuted,
+              selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 11),
+              unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11),
+              items: const [
+                BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home_rounded), label: "Home"),
+                BottomNavigationBarItem(icon: Icon(Icons.map_outlined), activeIcon: Icon(Icons.map_rounded), label: "Safety Map"),
+                BottomNavigationBarItem(icon: Icon(Icons.security_outlined), activeIcon: Icon(Icons.security_rounded), label: "Guardian"),
+                BottomNavigationBarItem(icon: Icon(Icons.inventory_2_outlined), activeIcon: Icon(Icons.inventory_2_rounded), label: "Evidence"),
+                BottomNavigationBarItem(icon: Icon(Icons.settings_outlined), activeIcon: Icon(Icons.settings_rounded), label: "Settings"),
+              ],
+            ),
+          ),
         ),
       ),
     );

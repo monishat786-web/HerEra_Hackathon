@@ -27,20 +27,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 title: "Your Safety, Our Priority",
                 subtitle: "Smart features to keep you protected.",
                 icon: Icons.security_rounded,
-                color: AppColors.primarySoft,
+                color: AppColors.primary,
               ),
               _buildSlide(
                 title: "We listen only when you need us.",
                 subtitle: "Your privacy is paramount. Activate features only when you feel unsafe.",
                 icon: Icons.mic_none_rounded,
-                color: AppColors.mintGreen,
+                color: AppColors.safe,
                 hasConsent: true,
               ),
               _buildSlide(
                 title: "Enable Permissions",
                 subtitle: "To work effectively, we need access to location, microphone, and notifications.",
                 icon: Icons.settings_input_component_rounded,
-                color: AppColors.coral,
+                color: AppColors.caution,
                 isFinal: true,
               ),
             ],
@@ -67,6 +67,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       );
                     }
                   },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
                   child: Text(_currentPage == 2 ? "Get Started" : "Next"),
                 ),
               ],
@@ -90,24 +95,35 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 100, color: color),
-          const SizedBox(height: 40),
+          Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 80, color: color),
+          ),
+          const SizedBox(height: 48),
           Text(
             title,
-            style: Theme.of(context).textTheme.headlineMedium,
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           Text(
             subtitle,
-            style: Theme.of(context).textTheme.bodyMedium,
+            style: const TextStyle(fontSize: 16, color: AppColors.textSecondary),
             textAlign: TextAlign.center,
           ),
           if (hasConsent) ...[
             const SizedBox(height: 40),
             Row(
               children: [
-                Checkbox(value: true, onChanged: (_) {}),
+                Checkbox(
+                  value: true, 
+                  onChanged: (_) {},
+                  activeColor: AppColors.primary,
+                ),
                 const Expanded(
                   child: Text(
                     "I agree to activate features only during emergencies.",
@@ -131,7 +147,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           width: _currentPage == index ? 20 : 8,
           height: 8,
           decoration: BoxDecoration(
-            color: _currentPage == index ? AppColors.primaryDeep : Colors.grey[300],
+            color: _currentPage == index ? AppColors.primary : AppColors.border,
             borderRadius: BorderRadius.circular(4),
           ),
         ),

@@ -7,12 +7,11 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: AppColors.primaryDeep,
-        primary: AppColors.primaryDeep,
-        secondary: AppColors.deepBlue,
+      colorScheme: const ColorScheme.light(
+        primary: AppColors.primary,
+        secondary: AppColors.secondary,
         surface: AppColors.background,
-        error: AppColors.raspberry,
+        error: AppColors.highRisk,
         onPrimary: Colors.white,
         onSurface: AppColors.textPrimary,
       ),
@@ -24,24 +23,25 @@ class AppTheme {
         iconTheme: IconThemeData(color: AppColors.textPrimary),
         titleTextStyle: TextStyle(
           color: AppColors.textPrimary,
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          fontFamily: 'Inter',
         ),
       ),
-      textTheme: GoogleFonts.quicksandTextTheme().copyWith(
-        displayLarge: GoogleFonts.quicksand(
+      textTheme: GoogleFonts.interTextTheme().copyWith(
+        displayLarge: GoogleFonts.inter(
           fontSize: 32,
           fontWeight: FontWeight.bold,
           color: AppColors.textPrimary,
         ),
-        headlineMedium: GoogleFonts.quicksand(
+        headlineMedium: GoogleFonts.inter(
           fontSize: 24,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
         ),
-        titleLarge: GoogleFonts.quicksand(
+        titleLarge: GoogleFonts.inter(
           fontSize: 20,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
         ),
         bodyLarge: GoogleFonts.inter(
@@ -52,35 +52,44 @@ class AppTheme {
           fontSize: 14,
           color: AppColors.textSecondary,
         ),
-        labelLarge: GoogleFonts.inter(
-          fontSize: 14,
-          fontWeight: FontWeight.bold,
-          color: AppColors.primaryDeep,
-        ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primaryDeep,
+          backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
           elevation: 0,
-          shadowColor: AppColors.primaryDeep.withValues(alpha: 0.3),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-          textStyle: GoogleFonts.quicksand(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
         ),
       ),
       cardTheme: CardThemeData(
         color: Colors.white,
-        elevation: 2,
-        shadowColor: AppColors.cardShadow,
+        elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(24),
+          side: const BorderSide(color: AppColors.border, width: 1),
         ),
+      ),
+    );
+  }
+
+  static ThemeData get darkTheme {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      colorScheme: const ColorScheme.dark(
+        primary: AppColors.primary,
+        secondary: AppColors.secondary,
+        surface: AppColors.backgroundDark,
+        error: AppColors.highRisk,
+        onPrimary: Colors.white,
+        onSurface: AppColors.textPrimaryDark,
+      ),
+      scaffoldBackgroundColor: AppColors.backgroundDark,
+      textTheme: GoogleFonts.interTextTheme().apply(
+        bodyColor: AppColors.textPrimaryDark,
+        displayColor: AppColors.textPrimaryDark,
       ),
     );
   }

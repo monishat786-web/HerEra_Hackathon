@@ -1,12 +1,7 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
-import 'dart:ui';
-import 'package:noise_meter/noise_meter.dart';
-import 'package:record/record.dart';
-import 'package:path_provider/path_provider.dart';
+import 'dart:ui' as ui;
 import '../../../core/constants/app_colors.dart';
-import '../../../core/widgets/app_drawer.dart';
-import '../../profile/views/profile_screen.dart';
+import '../../sentinel/views/sentinel_details_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -16,140 +11,52 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
-  late AnimationController _pulseController;
-  late Animation<double> _pulseAnimation;
-  
-  // Night Safety Mode state
-  bool _isNightModeActive = false;
-  late AnimationController _nightPulseController;
-  late Animation<double> _nightPulseAnimation;
-
-  // Noise Meter & Recording
-  bool _isRecording = false;
-  StreamSubscription<NoiseReading>? _noiseSubscription;
-  NoiseMeter? _noiseMeter;
-  double _dbLevel = 0.0;
-  final AudioRecorder _audioRecorder = AudioRecorder();
-
-  // SOS Triple Tap
-  int _sosTapCount = 0;
-  Timer? _sosTimer;
+  late AnimationController _sosController;
+  late AnimationController _riskController;
 
   @override
   void initState() {
     super.initState();
-    _pulseController = AnimationController(
+    _sosController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
-    )..repeat();
-    _pulseAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeOut),
-    );
+    )..repeat(reverse: true);
 
-    _nightPulseController = AnimationController(
+    _riskController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    );
-    _nightPulseAnimation = Tween<double>(begin: 0.8, end: 1.2).animate(
-      CurvedAnimation(parent: _nightPulseController, curve: Curves.easeInOut),
-    );
-
-    _startNoiseMonitoring();
-  }
-
-  void _startNoiseMonitoring() async {
-    _noiseMeter = NoiseMeter();
-    _noiseSubscription = _noiseMeter?.noise.listen((NoiseReading noiseReading) {
-      setState(() {
-        _dbLevel = noiseReading.meanDecibel;
-      });
-      // Automatic scream detection if db > 85
-      if (_dbLevel > 85 && !_isRecording) {
-        _startAutomaticRecording();
-      }
-    });
-  }
-
-  Future<void> _startAutomaticRecording() async {
-    if (await _audioRecorder.hasPermission()) {
-      final dir = await getApplicationDocumentsDirectory();
-      final path = '${dir.path}/scream_${DateTime.now().millisecondsSinceEpoch}.m4a';
-      
-      const config = RecordConfig();
-      await _audioRecorder.start(config, path: path);
-      setState(() => _isRecording = true);
-      
-      // Record for 10 seconds then stop
-      Future.delayed(const Duration(seconds: 10), () async {
-        await _audioRecorder.stop();
-        if (mounted) setState(() => _isRecording = false);
-      });
-    }
-  }
-
-  void _handleSOSClick() {
-    _sosTapCount++;
-    if (_sosTapCount == 1) {
-      _sosTimer = Timer(const Duration(seconds: 2), () {
-        _sosTapCount = 0;
-      });
-    }
-
-    if (_sosTapCount >= 3) {
-      _sosTimer?.cancel();
-      _sosTapCount = 0;
-      _triggerSOS();
-    }
-  }
-
-  void _triggerSOS() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("SOS ALERT SENT SUCCESSFULLY!"),
-        backgroundColor: AppColors.raspberry,
-      ),
-    );
-    _startAutomaticRecording();
+      duration: const Duration(seconds: 4),
+    )..repeat(reverse: true);
   }
 
   @override
   void dispose() {
-    _pulseController.dispose();
-    _nightPulseController.dispose();
-    _noiseSubscription?.cancel();
-    _audioRecorder.dispose();
-    _sosTimer?.cancel();
+    _sosController.dispose();
+    _riskController.dispose();
     super.dispose();
   }
-
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: _scaffoldKey,
       backgroundColor: AppColors.background,
-      drawer: const AppDrawer(),
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 20),
-              _buildTopBar(),
-              const SizedBox(height: 10),
-              _buildStylishHeader(),
-              const SizedBox(height: 40),
-              _buildDetectionCenter(),
-              const SizedBox(height: 50),
-              _buildQuickActionsCard(),
-              const SizedBox(height: 40),
-              _buildNightSafetyModeCard(),
-              const SizedBox(height: 40),
-              _buildRiskLevelCard(),
-              const SizedBox(height: 30),
+              _buildHeader(),
+              const SizedBox(height: 48),
+              _buildHeroSOS(),
+              const SizedBox(height: 48),
+              _buildRiskIntelligenceCard(),
+              const SizedBox(height: 32),
+              _buildMapPreview(),
+              const SizedBox(height: 32),
+              _buildQuickActionStrip(),
+              const SizedBox(height: 100), // Bottom nav space
             ],
           ),
         ),
@@ -157,679 +64,364 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildTopBar() {
+  Widget _buildHeader() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Builder(
+              builder: (context) => IconButton(
+                onPressed: () => Scaffold.of(context).openDrawer(),
+                icon: const Icon(Icons.menu_rounded, size: 28),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+            ),
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Center(
+                child: Text("G", style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+        const Text(
+          "Good Evening, Grace",
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+            letterSpacing: -0.5,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                "Sentinel Mode: Adaptive Active",
+                style: TextStyle(
+                  color: AppColors.primary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHeroSOS() {
+    return Center(
+      child: Column(
+        children: [
+          GestureDetector(
+            onLongPress: () {
+              // Trigger SOS
+            },
+            child: AnimatedBuilder(
+              animation: _sosController,
+              builder: (context, child) {
+                return Container(
+                  width: 170,
+                  height: 170,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.highRisk.withValues(alpha: 0.2 + (_sosController.value * 0.3)),
+                        blurRadius: 30 + (_sosController.value * 20),
+                        spreadRadius: 10 + (_sosController.value * 10),
+                      ),
+                    ],
+                  ),
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: AppColors.highRisk,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            "SOS",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 48,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 2,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            "Hold 2 seconds to activate",
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRiskIntelligenceCard() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Area Safety Prediction",
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              _buildRiskSegment("LOW", AppColors.safe, true),
+              _buildRiskSegment("MODERATE", AppColors.caution, false),
+              _buildRiskSegment("HIGH", AppColors.highRisk, false),
+            ],
+          ),
+          const SizedBox(height: 24),
+          const Row(
+            children: [
+              Icon(Icons.auto_awesome_rounded, color: AppColors.primary, size: 20),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  "Lighting conditions ahead are low. Safer route available.",
+                  style: TextStyle(color: AppColors.textSecondary, fontSize: 13, height: 1.5),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: TextButton(
+              onPressed: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const SentinelDetailsScreen()));
+              },
+              style: TextButton.styleFrom(
+                backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text("View Full Intelligence Details", style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 12)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRiskSegment(String label, Color color, bool isActive) {
+    return Expanded(
+      child: Column(
+        children: [
+          Container(
+            height: 6,
+            margin: const EdgeInsets.symmetric(horizontal: 2),
+            decoration: BoxDecoration(
+              color: isActive ? color : AppColors.border,
+              borderRadius: BorderRadius.circular(3),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w800,
+              color: isActive ? color : AppColors.textMuted,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMapPreview() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "Safety Map Preview",
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          height: 220,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: const Color(0xFFF3F4F6),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Stack(
+            children: [
+              // Mock Map UI for Tamil Nadu
+              ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: CustomPaint(
+                  size: const Size(double.infinity, 220),
+                  painter: TamilNaduMapPainter(),
+                ),
+              ),
+              // Floating Button
+              Positioned(
+                bottom: 16,
+                right: 16,
+                child: ElevatedButton.icon(
+                  onPressed: () {},
+                  icon: const Icon(Icons.map_rounded, size: 18),
+                  label: const Text("Open Full Safety Map", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: AppColors.primary,
+                    elevation: 10,
+                    shadowColor: Colors.black.withValues(alpha: 0.2),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                ),
+              ),
+              // Blue Dot
+              const Center(
+                child: Icon(Icons.my_location_rounded, color: Colors.blue, size: 24),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuickActionStrip() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        GestureDetector(
-          onTap: () => _scaffoldKey.currentState?.openDrawer(),
-          child: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                ),
-              ],
-            ),
-            child: Image.asset(
-              'assets/images/logo.png',
-              width: 32,
-              height: 32,
-            ),
-          ),
-        ),
-        IconButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const ProfileScreen()),
-            );
-          },
-          icon: const Icon(Icons.account_circle_rounded, color: AppColors.primaryDeep, size: 32),
-        ),
+        _buildActionItem(Icons.call_rounded, "Guardian AI"),
+        _buildActionItem(Icons.share_location_rounded, "Share Live"),
+        _buildActionItem(Icons.nightlight_round, "Night Mode"),
+        _buildActionItem(Icons.directions_rounded, "Safe Routes"),
       ],
     );
   }
 
-  Widget _buildStylishHeader() {
-    return SizedBox(
-      width: double.infinity,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // Centered Logo Symbol - Significantly Larger
-          Image.asset(
-            'assets/images/logo.png',
-            width: 180,
-            height: 180,
-            fit: BoxFit.contain,
-          ),
-          const SizedBox(height: 10),
-          // Personalized Greeting
-          const Text(
-            "Hi Graceful",
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w300,
-              color: AppColors.textPrimary,
-              letterSpacing: 0.5,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetectionCenter() {
+  Widget _buildActionItem(IconData icon, String label) {
     return Column(
       children: [
         Container(
-          width: 250,
-          height: 250,
-          constraints: const BoxConstraints(
-            maxWidth: 250,
-            maxHeight: 250,
-            minWidth: 250,
-            minHeight: 250,
+          width: 64,
+          height: 64,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppColors.border),
           ),
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              // Pulsating Rings
-              for (int i = 0; i < 3; i++)
-                AnimatedBuilder(
-                  animation: _pulseAnimation,
-                  builder: (context, child) {
-                    double delay = i * 0.33;
-                    double progress = (_pulseAnimation.value + delay) % 1.0;
-                    return Opacity(
-                      opacity: (1.0 - progress) * 0.5,
-                      child: Container(
-                        width: 70 + (progress * 180),
-                        height: 70 + (progress * 180),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: AppColors.coral, width: 2),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              // Mic Icon Wrapper
-              ClipRRect(
-                borderRadius: BorderRadius.circular(50),
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Positioned.fill(
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                        child: Container(color: Colors.transparent),
-                      ),
-                    ),
-                    Container(
-                      width: 76,
-                      height: 76,
-                      decoration: BoxDecoration(
-                        color: _isRecording ? AppColors.raspberry : AppColors.primaryLight,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.glassBorder),
-                        boxShadow: [
-                          BoxShadow(
-                            color: (_isRecording ? AppColors.raspberry : AppColors.primaryDeep).withValues(alpha: 0.1),
-                            blurRadius: 10 + (_dbLevel / 10),
-                            spreadRadius: _dbLevel / 20,
-                          ),
-                        ],
-                      ),
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Icon(
-                            _isRecording ? Icons.fiber_manual_record : Icons.mic,
-                            color: _isRecording ? Colors.white : AppColors.coral,
-                            size: 40,
-                          ),
-                          if (_dbLevel > 0)
-                            Positioned(
-                              bottom: 12,
-                              child: Text(
-                                "${_dbLevel.toInt()} dB",
-                                style: TextStyle(
-                                  color: _isRecording ? Colors.white70 : AppColors.textMuted,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+          child: Icon(icon, color: AppColors.primary, size: 28),
         ),
-        const SizedBox(height: 25),
-        const Text(
-          "ACTIVE SCREAM DETECTION",
-          style: TextStyle(
-            color: AppColors.textMuted,
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 4,
-          ),
+        const SizedBox(height: 10),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSecondary),
         ),
-        const SizedBox(height: 40),
-        _buildSOSButton(),
       ],
     );
   }
+}
 
-  Widget _buildSOSButton() {
-    return Container(
-      width: 160,
-      height: 160,
-      constraints: const BoxConstraints(
-        maxWidth: 160,
-        maxHeight: 160,
-        minWidth: 160,
-        minHeight: 160,
-      ),
-      decoration: const BoxDecoration(shape: BoxShape.circle),
-      child: AspectRatio(
-        aspectRatio: 1.0,
-        child: GestureDetector(
-          onTap: _handleSOSClick,
-          child: Container(
-            width: double.infinity,
-            height: double.infinity,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(
-                colors: _sosTapCount > 0 
-                  ? [AppColors.raspberry, AppColors.coral] 
-                  : [AppColors.coral, AppColors.raspberry],
-                center: Alignment.center,
-                radius: 0.8,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.coral.withValues(alpha: 0.6),
-                  blurRadius: 40 + (_sosTapCount * 10),
-                  spreadRadius: 5 + (_sosTapCount * 2),
-                ),
-                const BoxShadow(
-                  color: Colors.black26,
-                  blurRadius: 20,
-                  offset: Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    "SOS",
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 36,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1,
-                    ),
-                  ),
-                  if (_sosTapCount > 0)
-                    Text(
-                      "TAP ${3 - _sosTapCount} MORE",
-                      style: const TextStyle(
-                        color: Colors.black54,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
+class TamilNaduMapPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.grey.withValues(alpha: 0.1)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+
+    // Drawing some mock road grid
+    for (int i = 0; i < size.width; i += 40) {
+      canvas.drawLine(Offset(i.toDouble(), 0), Offset(i.toDouble(), size.height), paint);
+    }
+    for (int i = 0; i < size.height; i += 40) {
+      canvas.drawLine(Offset(0, i.toDouble()), Offset(size.width, i.toDouble()), paint);
+    }
+
+    // Drawing a purple route
+    final pathPaint = Paint()
+      ..color = AppColors.primary.withValues(alpha: 0.6)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4.0
+      ..strokeCap = StrokeCap.round;
+
+    final path = ui.Path();
+    path.moveTo(0, size.height * 0.8);
+    // path.quadraticTo(size.width * 0.4, size.height * 0.7, size.width * 0.5, size.height * 0.5);
+    path.lineTo(size.width * 0.8, size.height * 0.2);
+    canvas.drawPath(path, pathPaint);
+
+    // Hazard Zones
+    final hazardPaint = Paint()..color = AppColors.highRisk.withValues(alpha: 0.2);
+    canvas.drawCircle(Offset(size.width * 0.3, size.height * 0.4), 30, hazardPaint);
+    
+    final cautionPaint = Paint()..color = AppColors.caution.withValues(alpha: 0.2);
+    canvas.drawCircle(Offset(size.width * 0.7, size.height * 0.6), 40, cautionPaint);
+
+    // Chennai label simulation
+    const textStyle = TextStyle(color: Colors.black54, fontSize: 10, fontWeight: FontWeight.bold);
+    final textPainter = TextPainter(
+      text: const TextSpan(text: "CHENNAI", style: textStyle),
+      textDirection: TextDirection.ltr,
     );
+    textPainter.layout();
+    textPainter.paint(canvas, Offset(size.width * 0.7, size.height * 0.15));
   }
 
-  Widget _buildQuickActionsCard() {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(30),
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
-                child: Container(color: Colors.transparent),
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: AppColors.glassBorder),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Quick Actions",
-                    style: TextStyle(color: AppColors.textPrimary, fontSize: 20, fontWeight: FontWeight.w700),
-                  ),
-                  const SizedBox(height: 20),
-                  Container(
-                    height: 120,
-                    constraints: const BoxConstraints(maxHeight: 120, minHeight: 120),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _buildActionIcon(Icons.navigation_rounded, "Safe Route", AppColors.mintGreen),
-                        _buildActionIcon(Icons.phone_in_talk_rounded, "Fake Call", Colors.teal, onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("Fake Call triggered")),
-                          );
-                        }),
-                        _buildActionIcon(Icons.folder_shared_rounded, "Evidence", AppColors.skyBlue),
-                        _buildActionIcon(Icons.auto_awesome_rounded, "AI Assist", AppColors.softPurple),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionIcon(IconData icon, String label, Color color, {VoidCallback? onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        width: 70,
-        height: 120,
-        constraints: const BoxConstraints(
-          maxWidth: 70,
-          maxHeight: 120,
-          minWidth: 70,
-          minHeight: 120,
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                color: AppColors.primaryLight,
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.glassBorder),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.15),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Icon(icon, color: color, size: 28),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              label,
-              style: const TextStyle(color: AppColors.textPrimary, fontSize: 11, fontWeight: FontWeight.w600),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNightSafetyModeCard() {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 400),
-      curve: Curves.easeInOut,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30),
-        gradient: _isNightModeActive
-            ? LinearGradient(
-                colors: [const Color(0xFF1A1A2E).withValues(alpha: 0.9), const Color(0xFF16213E).withValues(alpha: 0.9)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              )
-            : null,
-        color: !_isNightModeActive ? Colors.white : null,
-        border: Border.all(color: _isNightModeActive ? AppColors.softPurple.withValues(alpha: 0.5) : AppColors.glassBorder),
-        boxShadow: [
-          if (_isNightModeActive)
-            BoxShadow(
-              color: AppColors.softPurple.withValues(alpha: 0.3),
-              blurRadius: 20,
-              spreadRadius: 2,
-            )
-          else
-            const BoxShadow(
-              color: AppColors.cardShadow,
-              blurRadius: 15,
-            ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(30),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Header Row
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        // Moon Icon with animated glow
-                        AnimatedBuilder(
-                          animation: _nightPulseAnimation,
-                          builder: (context, child) {
-                            return Container(
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                boxShadow: _isNightModeActive
-                                    ? [
-                                        BoxShadow(
-                                          color: AppColors.softPurple.withValues(alpha: 0.6),
-                                          blurRadius: 15 * _nightPulseAnimation.value,
-                                          spreadRadius: 2 * _nightPulseAnimation.value,
-                                        ),
-                                      ]
-                                    : [],
-                              ),
-                              child: Icon(
-                                Icons.nightlight_round,
-                                color: _isNightModeActive ? AppColors.softPurple : Colors.grey[600],
-                                size: 28,
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Night Safety Mode",
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: _isNightModeActive ? Colors.white : AppColors.textPrimary,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: _isNightModeActive ? AppColors.softPurple.withValues(alpha: 0.2) : Colors.grey.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: _isNightModeActive ? AppColors.softPurple : Colors.transparent,
-                                  width: 1,
-                                ),
-                              ),
-                              child: Text(
-                                _isNightModeActive ? "ACTIVE" : "INACTIVE",
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  color: _isNightModeActive ? AppColors.softPurple : Colors.grey[600],
-                                  letterSpacing: 1,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    Switch(
-                      value: _isNightModeActive,
-                      onChanged: (val) {
-                        setState(() {
-                          _isNightModeActive = val;
-                          if (val) {
-                            _nightPulseController.repeat(reverse: true);
-                          } else {
-                            _nightPulseController.stop();
-                          }
-                        });
-                      },
-                      activeThumbColor: Colors.white,
-                      activeTrackColor: AppColors.softPurple,
-                      inactiveThumbColor: Colors.grey[400],
-                      inactiveTrackColor: Colors.grey[300],
-                    ),
-                  ],
-                ),
-                
-                // Collapsible Content
-                AnimatedCrossFade(
-                  firstChild: const SizedBox(width: double.infinity, height: 0),
-                  secondChild: Column(
-                    children: [
-                      const SizedBox(height: 24),
-                      // Risk & Safe Zones Row
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.05),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 50,
-                              height: 50,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(color: AppColors.mintGreen, width: 3),
-                              ),
-                              child: const Center(
-                                child: Text("LOW", style: TextStyle(color: AppColors.mintGreen, fontWeight: FontWeight.bold, fontSize: 12)),
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            const Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text("Protection ends in 5h 23m", style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
-                                  SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      Icon(Icons.location_on, color: AppColors.skyBlue, size: 14),
-                                      SizedBox(width: 4),
-                                      Text("12 safe places nearby", style: TextStyle(color: Colors.white70, fontSize: 12)),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      // Protection Features Grid
-                      GridView.count(
-                        shrinkWrap: true,
-                        crossAxisCount: 2,
-                        childAspectRatio: 4.5,
-                        physics: const NeverScrollableScrollPhysics(),
-                        mainAxisSpacing: 12,
-                        crossAxisSpacing: 12,
-                        children: [
-                          _buildTickItem("High-frequency tracking"),
-                          _buildTickItem("Danger zone alerts"),
-                          _buildTickItem("Accelerated SOS"),
-                          _buildTickItem("Live location sharing"),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      // Quick Action Buttons
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.teal.withValues(alpha: 0.8),
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                              ),
-                              onPressed: () {},
-                              child: const Text("Share Live Trip", style: TextStyle(fontWeight: FontWeight.bold)),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.softPurple.withValues(alpha: 0.8),
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                              ),
-                              onPressed: () {},
-                              child: const Text("Find Safe Route", style: TextStyle(fontWeight: FontWeight.bold)),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      // Smart Alert Ticker
-                      Container(
-                        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.3),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: const Row(
-                          children: [
-                            Icon(Icons.campaign_outlined, color: Colors.amber, size: 16),
-                            SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                "⚠️ Risk zone ahead - 500m • 🏪 Safe haven nearby - 24/7 pharmacy",
-                                style: TextStyle(color: Colors.white70, fontSize: 12),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  crossFadeState: _isNightModeActive ? CrossFadeState.showSecond : CrossFadeState.showFirst,
-                  duration: const Duration(milliseconds: 300),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTickItem(String text) {
-    return Row(
-      children: [
-        const Icon(Icons.check_circle, color: AppColors.mintGreen, size: 16),
-        const SizedBox(width: 8),
-        Expanded(child: Text(text, style: const TextStyle(color: Colors.white, fontSize: 11), maxLines: 1, overflow: TextOverflow.ellipsis)),
-      ],
-    );
-  }
-
-  Widget _buildRiskLevelCard() {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-              child: Container(color: Colors.transparent),
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: AppColors.glassBorder),
-              boxShadow: const [
-                BoxShadow(
-                  color: AppColors.cardShadow,
-                  blurRadius: 15,
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: AppColors.mintGreen.withValues(alpha: 0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.verified_user_rounded, color: AppColors.mintGreen, size: 32),
-                ),
-                const SizedBox(width: 20),
-                const Expanded(
-                  flex: 1,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text("Risk Level: Low", style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 18)),
-                      SizedBox(height: 4),
-                      Text("Your area is safe. Stay aware.", style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
 import '../../../core/constants/app_colors.dart';
 
 class SOSHistoryScreen extends StatelessWidget {
@@ -28,11 +27,8 @@ class SOSHistoryScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text("SOS HISTORY", style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2)),
+        title: const Text("SOS History"),
         centerTitle: true,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        foregroundColor: AppColors.primaryDeep,
       ),
       body: ListView.builder(
         padding: const EdgeInsets.all(20),
@@ -49,7 +45,9 @@ class SOSHistoryScreen extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
+        color: Colors.white,
         borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.border),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -58,60 +56,49 @@ class SOSHistoryScreen extends StatelessWidget {
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.8),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: AppColors.glassBorder),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: AppColors.raspberry.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        item['reason']!,
-                        style: const TextStyle(
-                          color: AppColors.raspberry,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 10,
-                        ),
-                      ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.highRisk.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    item['reason']!,
+                    style: const TextStyle(
+                      color: AppColors.highRisk,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 10,
                     ),
-                    Text(
-                      "${item['date']} | ${item['time']}",
-                      style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
-                    ),
-                  ],
+                  ),
                 ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    const Icon(Icons.location_on, color: AppColors.primaryDeep, size: 20),
-                    const SizedBox(width: 8),
-                    Text(
-                      item['location']!,
-                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
-                    ),
-                  ],
+                Text(
+                  "${item['date']} | ${item['time']}",
+                  style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
                 ),
-                const SizedBox(height: 20),
-                _buildPlaybackBar(context, item['recording']!),
               ],
             ),
-          ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                const Icon(Icons.location_on, color: AppColors.primary, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  item['location']!,
+                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            _buildPlaybackBar(context, item['recording']!),
+          ],
         ),
       ),
     );
@@ -121,23 +108,24 @@ class SOSHistoryScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.primaryLight.withValues(alpha: 0.5),
+        color: AppColors.primary.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         children: [
-          const Icon(Icons.play_arrow_rounded, color: AppColors.primaryDeep),
+          const Icon(Icons.play_arrow_rounded, color: AppColors.primary),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("Emergency Recording", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                SizedBox(height: 4),
+                const Text("Emergency Recording", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                const SizedBox(height: 4),
                 LinearProgressIndicator(
                   value: 0.4,
                   backgroundColor: Colors.white24,
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryDeep),
+                  valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ],
             ),
@@ -145,7 +133,7 @@ class SOSHistoryScreen extends StatelessWidget {
           const SizedBox(width: 12),
           IconButton(
             onPressed: () {},
-            icon: const Icon(Icons.download_rounded, color: AppColors.primaryDeep, size: 20),
+            icon: const Icon(Icons.download_rounded, color: AppColors.primary, size: 20),
           ),
         ],
       ),

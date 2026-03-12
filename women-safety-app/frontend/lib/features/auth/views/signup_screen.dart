@@ -131,7 +131,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _handleSignup,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryDeep,
+                    backgroundColor: AppColors.primary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
@@ -151,7 +151,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   onPressed: () => Navigator.pop(context),
                   child: const Text(
                     "Already have an account? Login",
-                    style: TextStyle(color: AppColors.primaryDeep, fontWeight: FontWeight.bold),
+                    style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
@@ -177,7 +177,7 @@ class _SignupScreenState extends State<SignupScreen> {
         Text(
           label,
           style: const TextStyle(
-            fontSize: 14,
+            fontSize: 13,
             fontWeight: FontWeight.w600,
             color: AppColors.textSecondary,
           ),
@@ -185,9 +185,9 @@ class _SignupScreenState extends State<SignupScreen> {
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: Colors.grey.withValues(alpha: 0.05),
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.glassBorder),
+            border: Border.all(color: AppColors.border),
           ),
           child: TextField(
             controller: controller,
@@ -195,7 +195,7 @@ class _SignupScreenState extends State<SignupScreen> {
             keyboardType: keyboardType,
             style: const TextStyle(color: AppColors.textPrimary),
             decoration: InputDecoration(
-              prefixIcon: Icon(icon, color: AppColors.primaryDeep, size: 22),
+              prefixIcon: Icon(icon, color: AppColors.primary, size: 22),
               suffixIcon: isPassword 
                 ? IconButton(
                     icon: Icon(
