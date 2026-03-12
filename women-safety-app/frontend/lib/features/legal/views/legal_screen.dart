@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/app_colors.dart';
 
 class LegalScreen extends StatefulWidget {
@@ -10,253 +10,271 @@ class LegalScreen extends StatefulWidget {
 }
 
 class _LegalScreenState extends State<LegalScreen> {
+  String _selectedCategory = "All";
+  final List<String> _categories = ["All", "Domestic", "Workplace", "Cyber", "Social"];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 20),
-            _buildHeader(),
-            const SizedBox(height: 20),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                physics: const BouncingScrollPhysics(),
-                children: [
-                  _buildLegalActsSection(),
-                  const SizedBox(height: 100), // Padding for bottom nav
-                ],
-              ),
+      appBar: _buildAppBar(context),
+      body: Column(
+        children: [
+          _buildCategoryFilter(),
+          Expanded(
+            child: ListView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+              children: [
+                _buildSectionHeader("Indian Constitutional Rights", Icons.balance_outlined),
+                const SizedBox(height: 16),
+                _buildLegalCard(
+                  "POSH Act, 2013",
+                  "Sexual Harassment of Women at Workplace Prevention, Prohibition and Redressal.",
+                  "Workplace",
+                  Icons.business_center_rounded,
+                  AppColors.primary,
+                ),
+                _buildLegalCard(
+                  "Domestic Violence Act, 2005",
+                  "Protection from physical, emotional, and social abuse within the household.",
+                  "Domestic",
+                  Icons.house_rounded,
+                  AppColors.secondary,
+                ),
+                _buildLegalCard(
+                  "IT Act - Section 66E",
+                  "Fundamental protection against cyber-stalking, voyeurism, and identity theft.",
+                  "Cyber",
+                  Icons.pin_outlined,
+                  AppColors.mintGreen,
+                ),
+                _buildLegalCard(
+                  "Equal Remuneration Act",
+                  "Right to equal pay for equal work regardless of gender or seniority.",
+                  "Social",
+                  Icons.payments_outlined,
+                  Colors.orange,
+                ),
+                _buildLegalCard(
+                  "Criminal Law Amendment, 2013",
+                  "Strict penalties for stalking, voyeurism, and acid attack threats.",
+                  "Social",
+                  Icons.gavel_rounded,
+                  AppColors.sosRed,
+                ),
+                const SizedBox(height: 32),
+                _buildLegalAidBanner(),
+                const SizedBox(height: 48),
+              ],
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      decoration: BoxDecoration(
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
           ),
         ],
-        borderRadius: BorderRadius.circular(50),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(50),
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                child: Container(color: Colors.transparent),
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 14),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2), // slightly more opaque for black text contrast
-                borderRadius: BorderRadius.circular(50),
-                border: Border.all(color: AppColors.glassBorder),
-              ),
-              child: const Text(
-                "Legal Rights & Consent",
-                style: TextStyle(
-                  fontFamily: 'Playfair Display',
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
 
-  Widget _buildLegalActsSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Row(
-          children: [
-            Icon(Icons.gavel_rounded, color: Colors.black, size: 28),
-            SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                "Your Legal Protection - Indian Acts",
-                style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
+    return AppBar(
+      backgroundColor: Colors.white,
+      elevation: 0,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary, size: 20),
+        onPressed: () => Navigator.pop(context),
+      ),
+      title: Text(
+        "Legal Rights",
+        style: GoogleFonts.quicksand(
+          fontWeight: FontWeight.bold,
+          color: AppColors.textPrimary,
+          fontSize: 22,
+        ),
+      ),
+      actions: [
+        IconButton(
+          onPressed: () {},
+          icon: const Icon(Icons.search_rounded, color: AppColors.textSecondary),
+        ),
+        const SizedBox(width: 8),
+      ],
+    );
+  }
+
+  Widget _buildCategoryFilter() {
+    return Container(
+      height: 60,
+      color: Colors.white,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        itemCount: _categories.length,
+        itemBuilder: (context, index) {
+          bool isActive = _selectedCategory == _categories[index];
+          return GestureDetector(
+            onTap: () => setState(() => _selectedCategory = _categories[index]),
+            child: Container(
+              margin: const EdgeInsets.only(right: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              decoration: BoxDecoration(
+                color: isActive ? AppColors.primary : AppColors.background,
+                borderRadius: BorderRadius.circular(15),
+                border: Border.all(color: isActive ? AppColors.primary : AppColors.border),
+              ),
+              child: Center(
+                child: Text(
+                  _categories[index],
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: isActive ? Colors.white : AppColors.textSecondary,
+                  ),
                 ),
               ),
             ),
-          ],
-        ),
-        const SizedBox(height: 20),
-        _buildActCard(
-          "The Protection of Women from Domestic Violence Act, 2005",
-          "Protection from domestic abuse including physical, emotional, sexual, and economic violence. Provides right to reside in shared household and protection orders.",
-        ),
-        const SizedBox(height: 12),
-        _buildActCard(
-          "The Sexual Harassment of Women at Workplace (POSH) Act, 2013",
-          "Ensures safe working environment through Internal Complaints Committees and mandates annual awareness programs.",
-        ),
-        const SizedBox(height: 12),
-        _buildActCard(
-          "Dowry Prohibition Act, 1961",
-          "Penalizes giving, taking, or demanding dowry. Imprisonment up to 5 years and fine up to ₹15,000.",
-        ),
-        const SizedBox(height: 12),
-        _buildActCard(
-          "The Indecent Representation of Women (Prohibition) Act, 1986",
-          "Prohibits derogatory portrayal of women in advertisements, publications, and media.",
-        ),
-        const SizedBox(height: 12),
-        _buildActCard(
-          "The Criminal Law (Amendment) Act, 2013",
-          "Expanded definition of rape, increased punishment, introduced new offenses like stalking and voyeurism.",
-        ),
-        const SizedBox(height: 12),
-        _buildActCard(
-          "The Medical Termination of Pregnancy Act, 1971",
-          "Legalizes abortion up to 24 weeks for survivors of rape, incest, and other vulnerable women.",
-        ),
-        const SizedBox(height: 12),
-        _buildActCard(
-          "The Pre-Conception & Pre-Natal Diagnostic Techniques Act, 1994",
-          "Prohibits sex determination and female foeticide. Regulates ultrasound and genetic clinics.",
-        ),
-        const SizedBox(height: 12),
-        _buildActCard(
-          "The Equal Remuneration Act, 1976",
-          "Mandates equal pay for equal work regardless of gender. Prevents discrimination in recruitment and employment.",
-        ),
-        const SizedBox(height: 12),
-        _buildActCard(
-          "The National Commission for Women Act, 1990",
-          "Established NCW to investigate legal violations, advise government, and protect women's rights.",
-        ),
-        const SizedBox(height: 12),
-        _buildActCard(
-          "The Prohibition of Child Marriage Act, 2006",
-          "Declares child marriage voidable, punishes those who perform or promote it, and provides maintenance and custody rights.",
-        ),
-        
-        const SizedBox(height: 24),
-        Center(
-          child: TextButton(
-            onPressed: () {},
-            child: const Text(
-              "Know Your Rights",
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                decoration: TextDecoration.underline,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 10),
-        const Center(
-          child: Text(
-            "These acts empower and protect you. For detailed legal advice, consult an attorney.",
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.black87,
-              fontSize: 12,
-              fontStyle: FontStyle.italic,
-            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: AppColors.primary),
+        const SizedBox(width: 10),
+        Text(
+          title,
+          style: GoogleFonts.quicksand(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textMuted,
+            letterSpacing: 0.5,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildActCard(String title, String description) {
+  Widget _buildLegalCard(String title, String desc, String category, IconData icon, Color color) {
     return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                child: Container(color: Colors.transparent),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: color, size: 20),
               ),
-            ),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.35), // Higher opacity for black text contrast
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.glassBorder),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      shape: BoxShape.circle,
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: GoogleFonts.quicksand(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
-                    child: const Icon(Icons.article_outlined, color: Colors.black, size: 24),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: const TextStyle(
-                            color: Colors.black, // BOLD BLACK TEXT
-                            fontWeight: FontWeight.w800,
-                            fontSize: 15,
-                            height: 1.3,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          description,
-                          style: const TextStyle(
-                            color: Colors.black87, // REGULAR BLACK TEXT
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            height: 1.4,
-                          ),
-                        ),
-                      ],
+                    const SizedBox(height: 2),
+                    Text(
+                      category,
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: color,
+                        letterSpacing: 1,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            desc,
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              color: AppColors.textSecondary,
+              height: 1.5,
             ),
-          ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLegalAidBanner() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppColors.primary, AppColors.secondary],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          const Icon(Icons.volunteer_activism_rounded, color: Colors.white, size: 40),
+          const SizedBox(height: 16),
+          Text(
+            "Need Legal Assistance?",
+            style: GoogleFonts.quicksand(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "Connect with verified women's rights advocates and free legal aid services.",
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(color: Colors.white.withValues(alpha: 0.8), fontSize: 12, height: 1.5),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: () {},
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: AppColors.primary,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            ),
+            child: Text(
+              "Get Legal Aid",
+              style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
       ),
     );
   }

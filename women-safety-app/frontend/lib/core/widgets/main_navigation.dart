@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../features/home/views/home_screen.dart';
 import '../../features/map/views/map_screen.dart';
-import '../../features/evidence_locker/views/evidence_locker_screen.dart';
 import '../../features/profile/views/profile_screen.dart';
-import '../../features/guardian/views/guardian_call_screen.dart';
+import '../../features/community/views/community_screen.dart';
 import '../constants/app_colors.dart';
 import 'app_drawer.dart';
 
@@ -20,8 +19,7 @@ class _MainNavigationState extends State<MainNavigation> {
   final List<Widget> _screens = [
     const HomeScreen(),
     const MapScreen(),
-    const GuardianCallScreen(),
-    const EvidenceLockerScreen(),
+    const CommunityScreen(),
     const ProfileScreen(),
   ];
 
@@ -58,12 +56,35 @@ class _MainNavigationState extends State<MainNavigation> {
               selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 11),
               unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11),
               items: const [
-                BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home_rounded), label: "Home"),
-                BottomNavigationBarItem(icon: Icon(Icons.map_outlined), activeIcon: Icon(Icons.map_rounded), label: "Safety Map"),
-                BottomNavigationBarItem(icon: Icon(Icons.security_outlined), activeIcon: Icon(Icons.security_rounded), label: "Guardian"),
-                BottomNavigationBarItem(icon: Icon(Icons.inventory_2_outlined), activeIcon: Icon(Icons.inventory_2_rounded), label: "Evidence"),
-                BottomNavigationBarItem(icon: Icon(Icons.settings_outlined), activeIcon: Icon(Icons.settings_rounded), label: "Settings"),
-              ],
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.home_outlined),
+                  activeIcon: Icon(Icons.home_rounded),
+                  label: "Home",
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.map_outlined),
+                  activeIcon: Icon(Icons.map_rounded),
+                  label: "Safety Map",
+                ),
+                BottomNavigationBarItem(
+                  icon: Badge(
+                    backgroundColor: AppColors.mintGreen,
+                    smallSize: 8,
+                    child: Icon(Icons.people_outline_rounded),
+                  ),
+                  activeIcon: Badge(
+                    backgroundColor: AppColors.mintGreen,
+                    smallSize: 8,
+                    child: Icon(Icons.people_rounded),
+                  ),
+                  label: "Community",
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.person_outline_rounded),
+                  activeIcon: Icon(Icons.person_rounded),
+                  label: "Profile",
+                ),
+],
             ),
           ),
         ),

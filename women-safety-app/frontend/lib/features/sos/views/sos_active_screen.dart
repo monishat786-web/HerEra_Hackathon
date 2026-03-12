@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'dart:async';
-import '../../home/views/home_screen.dart'; // For the map painter
+import '../../../core/widgets/tamil_nadu_map_painter.dart';
 
 class SOSActiveScreen extends StatefulWidget {
   const SOSActiveScreen({super.key});
@@ -11,6 +12,7 @@ class SOSActiveScreen extends StatefulWidget {
 
 class _SOSActiveScreenState extends State<SOSActiveScreen> with TickerProviderStateMixin {
   late AnimationController _pulseController;
+  late AnimationController _rippleController;
   int _countdown = 5;
   Timer? _timer;
 
@@ -22,6 +24,11 @@ class _SOSActiveScreenState extends State<SOSActiveScreen> with TickerProviderSt
       duration: const Duration(seconds: 1),
     )..repeat(reverse: true);
 
+    _rippleController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat();
+
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_countdown > 0) {
         setState(() => _countdown--);
@@ -32,6 +39,7 @@ class _SOSActiveScreenState extends State<SOSActiveScreen> with TickerProviderSt
   @override
   void dispose() {
     _pulseController.dispose();
+    _rippleController.dispose();
     _timer?.cancel();
     super.dispose();
   }
@@ -43,7 +51,7 @@ class _SOSActiveScreenState extends State<SOSActiveScreen> with TickerProviderSt
         width: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFFB71C1C), Color(0xFFE53935)],
+            colors: [Color(0xFF7F1D1D), Color(0xFF991B1B)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -52,13 +60,13 @@ class _SOSActiveScreenState extends State<SOSActiveScreen> with TickerProviderSt
           child: Column(
             children: [
               const SizedBox(height: 48),
-              _buildPulsingHeader(),
+              _buildHighTechHeader(),
               const Spacer(),
-              _buildMiniMap(),
+              _buildForensicMap(),
               const Spacer(),
-              _buildStatusPanel(),
-              const SizedBox(height: 40),
-              _buildCancelButton(),
+              _buildEmergencyStatus(),
+              const SizedBox(height: 48),
+              _buildCancelAction(),
               const SizedBox(height: 40),
             ],
           ),
@@ -67,68 +75,130 @@ class _SOSActiveScreenState extends State<SOSActiveScreen> with TickerProviderSt
     );
   }
 
-  Widget _buildPulsingHeader() {
-    return AnimatedBuilder(
-      animation: _pulseController,
-      builder: (context, child) {
-        return Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(24),
+  Widget _buildHighTechHeader() {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        AnimatedBuilder(
+          animation: _rippleController,
+          builder: (context, child) {
+            return Container(
+              width: 140 * _rippleController.value,
+              height: 140 * _rippleController.value,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.white.withValues(alpha: 0.2 + (_pulseController.value * 0.4)), width: 2),
+                border: Border.all(color: Colors.white.withValues(alpha: 1 - _rippleController.value), width: 2),
               ),
-              child: const Icon(Icons.emergency_rounded, color: Colors.white, size: 60),
-            ),
-            const SizedBox(height: 32),
-            const Text(
-              "Emergency Signal Broadcasting",
-              style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            );
+          },
+        ),
+        AnimatedBuilder(
+          animation: _pulseController,
+          builder: (context, child) {
+            return Column(
               children: [
-                Container(width: 8, height: 8, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle)),
-                const SizedBox(width: 8),
-                const Text("LIVE RECORDING ACTIVE", style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+                Container(
+                  padding: const EdgeInsets.all(28),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.2 + (_pulseController.value * 0.3)), width: 2),
+                  ),
+                  child: const Icon(Icons.emergency_rounded, color: Colors.white, size: 56),
+                ),
+                const SizedBox(height: 32),
+                Text(
+                  "EMERGENCY SIGNAL ACTIVE",
+                  style: GoogleFonts.quicksand(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 10,
+                      height: 10,
+                      decoration: const BoxDecoration(
+                        color: Colors.redAccent,
+                        shape: BoxShape.circle,
+                        boxShadow: [BoxShadow(color: Colors.red, blurRadius: 10, spreadRadius: 2)],
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      "LIVE FORENSIC RECORDING",
+                      style: GoogleFonts.inter(
+                        color: Colors.white.withValues(alpha: 0.7),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 2,
+                      ),
+                    ),
+                  ],
+                ),
               ],
-            ),
-          ],
-        );
-      },
+            );
+          },
+        ),
+      ],
     );
   }
 
-  Widget _buildMiniMap() {
+  Widget _buildForensicMap() {
     return Container(
-      width: 280,
-      height: 280,
+      width: 260,
+      height: 260,
       decoration: BoxDecoration(
-        color: Colors.white10,
+        color: Colors.black.withValues(alpha: 0.2),
         shape: BoxShape.circle,
-        border: Border.all(color: Colors.white24, width: 4),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1), width: 1),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 40),
+        ],
       ),
       child: ClipOval(
         child: Stack(
           children: [
             CustomPaint(
-              size: const Size(280, 280),
+              size: const Size(260, 260),
               painter: TamilNaduMapPainter(),
             ),
-            const Center(
-              child: Icon(Icons.my_location_rounded, color: Colors.blue, size: 30),
+            Center(
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Container(
+                    width: 40, height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withValues(alpha: 0.2),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const Icon(Icons.my_location_rounded, color: Colors.blueAccent, size: 24),
+                ],
+              ),
             ),
-            const Positioned(
+            Positioned(
               bottom: 40,
-              left: 40,
-              right: 40,
+              left: 0,
+              right: 0,
               child: Center(
-                child: Text(
-                  "LAT: 13.0827 | LNG: 80.2707",
-                  style: TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    "GPS: 13.0827, 80.2707",
+                    style: GoogleFonts.inter(color: Colors.white70, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 1),
+                  ),
                 ),
               ),
             ),
@@ -138,43 +208,64 @@ class _SOSActiveScreenState extends State<SOSActiveScreen> with TickerProviderSt
     );
   }
 
-  Widget _buildStatusPanel() {
+  Widget _buildEmergencyStatus() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 40),
-      child: const Column(
+      child: Column(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
-              SizedBox(width: 16),
-              Text("Nearby Helpers Connecting...", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+              const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white)),
+              const SizedBox(width: 16),
+              Text(
+                "Connecting to nearby responders...",
+                style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14),
+              ),
             ],
           ),
-          SizedBox(height: 16),
-          Text("Network Relay Status: ENCRYPTED & ACTIVE", style: TextStyle(color: Colors.white54, fontSize: 10, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+            ),
+            child: Text(
+              "Encrypted data packets being sent to Trusted Responders & Police HQ.",
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(color: Colors.white.withValues(alpha: 0.5), fontSize: 11, height: 1.5, fontWeight: FontWeight.w500),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildCancelButton() {
+  Widget _buildCancelAction() {
     return Column(
       children: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          style: TextButton.styleFrom(
-            backgroundColor: Colors.black.withValues(alpha: 0.3),
-            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-          ),
-          child: Text(
-            "Cancel SOS ($_countdown)",
-            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+        GestureDetector(
+          onTap: () => Navigator.pop(context),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 18),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(35),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+            ),
+            child: Text(
+              "CANCEL SOS ($_countdown)",
+              style: GoogleFonts.inter(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 1),
+            ),
           ),
         ),
-        const SizedBox(height: 12),
-        const Text("Release to trigger if not in safe zone", style: TextStyle(color: Colors.white38, fontSize: 11)),
+        const SizedBox(height: 16),
+        Text(
+          "Press and hold if safe. Silent alert still active.",
+          style: GoogleFonts.inter(color: Colors.white.withValues(alpha: 0.4), fontSize: 11, fontWeight: FontWeight.w500),
+        ),
       ],
     );
   }
