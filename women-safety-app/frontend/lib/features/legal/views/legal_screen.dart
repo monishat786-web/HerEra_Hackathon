@@ -14,30 +14,24 @@ class _LegalScreenState extends State<LegalScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: AppColors.premiumGradient,
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              const SizedBox(height: 20),
-              _buildHeader(),
-              const SizedBox(height: 20),
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  physics: const BouncingScrollPhysics(),
-                  children: [
-                    _buildLegalActsSection(),
-                    const SizedBox(height: 100), // Padding for bottom nav
-                  ],
-                ),
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Column(
+          children: [
+            const SizedBox(height: 20),
+            _buildHeader(),
+            const SizedBox(height: 20),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                physics: const BouncingScrollPhysics(),
+                children: [
+                  _buildLegalActsSection(),
+                  const SizedBox(height: 100), // Padding for bottom nav
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -48,7 +42,7 @@ class _LegalScreenState extends State<LegalScreen> {
       decoration: BoxDecoration(
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -68,7 +62,7 @@ class _LegalScreenState extends State<LegalScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 14),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2), // slightly more opaque for black text contrast
+                color: Colors.white.withValues(alpha: 0.2), // slightly more opaque for black text contrast
                 borderRadius: BorderRadius.circular(50),
                 border: Border.all(color: AppColors.glassBorder),
               ),
@@ -78,7 +72,7 @@ class _LegalScreenState extends State<LegalScreen> {
                   fontFamily: 'Playfair Display',
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
-                  color: Colors.black, // ALL TEXT IN BLACK
+                  color: AppColors.textPrimary,
                   letterSpacing: 0.5,
                 ),
               ),
@@ -93,11 +87,11 @@ class _LegalScreenState extends State<LegalScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
+        const Row(
           children: [
-            const Icon(Icons.gavel_rounded, color: Colors.black, size: 28),
-            const SizedBox(width: 12),
-            const Expanded(
+            Icon(Icons.gavel_rounded, color: Colors.black, size: 28),
+            SizedBox(width: 12),
+            Expanded(
               child: Text(
                 "Your Legal Protection - Indian Acts",
                 style: TextStyle(
@@ -197,7 +191,7 @@ class _LegalScreenState extends State<LegalScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),
@@ -216,7 +210,7 @@ class _LegalScreenState extends State<LegalScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.35), // Higher opacity for black text contrast
+                color: Colors.white.withValues(alpha: 0.35), // Higher opacity for black text contrast
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: AppColors.glassBorder),
               ),
@@ -226,7 +220,7 @@ class _LegalScreenState extends State<LegalScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(Icons.article_outlined, color: Colors.black, size: 24),

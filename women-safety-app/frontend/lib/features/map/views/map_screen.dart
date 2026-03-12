@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
-import 'dart:async';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../../core/constants/app_colors.dart';
 
 class MapScreen extends StatefulWidget {
@@ -14,6 +14,14 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   late AnimationController _sosPulseController;
   late Animation<double> _sosPulseAnimation;
   bool _showDangerAlert = true;
+  GoogleMapController? _mapController;
+
+  static const CameraPosition _initialPosition = CameraPosition(
+    target: LatLng(11.1271, 78.6569), // Center of Tamil Nadu
+    zoom: 7.0,
+  );
+
+  final Set<Marker> _markers = {};
 
   @override
   void initState() {
@@ -26,6 +34,40 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     _sosPulseAnimation = Tween<double>(begin: 0.8, end: 1.4).animate(
       CurvedAnimation(parent: _sosPulseController, curve: Curves.easeOut),
     );
+
+    _loadDistrictMarkers();
+  }
+
+  void _loadDistrictMarkers() {
+    final districts = [
+      {'name': 'Chennai', 'lat': 13.0827, 'lng': 80.2707, 'risk': 'Low'},
+      {'name': 'Coimbatore', 'lat': 11.0168, 'lng': 76.9558, 'risk': 'Medium'},
+      {'name': 'Madurai', 'lat': 9.9252, 'lng': 78.1198, 'risk': 'Low'},
+      {'name': 'Trichy', 'lat': 10.7905, 'lng': 78.7047, 'risk': 'Safe'},
+      {'name': 'Salem', 'lat': 11.6643, 'lng': 78.1460, 'risk': 'Medium'},
+      {'name': 'Erode', 'lat': 11.3410, 'lng': 77.7172, 'risk': 'Safe'},
+      {'name': 'Tirunelveli', 'lat': 8.7139, 'lng': 77.7567, 'risk': 'Low'},
+      {'name': 'Vellore', 'lat': 12.9165, 'lng': 79.1325, 'risk': 'Medium'},
+      {'name': 'Thanjavur', 'lat': 10.7870, 'lng': 79.1378, 'risk': 'Safe'},
+      {'name': 'Kanchipuram', 'lat': 12.8342, 'lng': 79.7036, 'risk': 'Low'},
+    ];
+
+    for (var d in districts) {
+      _markers.add(
+        Marker(
+          markerId: MarkerId(d['name'] as String),
+          position: LatLng(d['lat'] as double, d['lng'] as double),
+          infoWindow: InfoWindow(
+            title: d['name'] as String,
+            snippet: 'Risk Level: ${d['risk']}',
+          ),
+          icon: BitmapDescriptor.defaultMarkerWithHue(
+            d['risk'] == 'Safe' ? BitmapDescriptor.hueGreen : 
+            d['risk'] == 'Medium' ? BitmapDescriptor.hueYellow : BitmapDescriptor.hueRed
+          ),
+        ),
+      );
+    }
   }
 
   @override
@@ -62,10 +104,17 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
           height: height,
           padding: padding,
           decoration: BoxDecoration(
-            color: baseColor ?? Colors.white.withOpacity(0.35),
+            color: baseColor ?? Colors.white.withValues(alpha: 0.8),
             shape: shape,
             borderRadius: shape == BoxShape.circle ? null : (borderRadius ?? BorderRadius.circular(24)),
-            border: Border.all(color: borderColor ?? Colors.white.withOpacity(0.6), width: 1.5),
+            border: Border.all(color: borderColor ?? AppColors.glassBorder, width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: child,
         ),
@@ -79,8 +128,17 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       extendBodyBehindAppBar: true,
       body: Stack(
         children: [
-          // 1. Main Map Area (Simulated for rich UI)
-          _buildSimulatedMap(),
+          // 1. REAL GOOGLE MAP AREA
+          GoogleMap(
+            initialCameraPosition: _initialPosition,
+            markers: _markers,
+            myLocationEnabled: true,
+            myLocationButtonEnabled: false,
+            zoomControlsEnabled: false,
+            mapToolbarEnabled: false,
+            onMapCreated: (controller) => _mapController = controller,
+            style: _mapStyle, // Optional: You can add custom styling here
+          ),
 
           // 2. Top Header
           Positioned(
@@ -88,13 +146,6 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             left: 16,
             right: 16,
             child: _buildTopHeader(),
-          ),
-
-          // 3. Map Legend
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 80,
-            left: 16,
-            child: _buildMapLegend(),
           ),
 
           // 4. Live Risk Alert Banner
@@ -132,121 +183,6 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     );
   }
 
-  // --- MAP & LAYERS ---
-  Widget _buildSimulatedMap() {
-    return Container(
-      width: double.infinity,
-      height: double.infinity,
-      decoration: const BoxDecoration(
-        color: Color(0xFFE8ECEF), // Light map background
-      ),
-      child: Stack(
-        children: [
-          // Grid lines as map placeholder
-          Positioned.fill(
-            child: CustomPaint(
-              painter: GridPainter(),
-            ),
-          ),
-          
-          // Heatmap Zones (Simulated with blurred circles)
-          Positioned(
-            top: 300,
-            left: 50,
-            child: _buildHeatmapZone(Colors.red.withOpacity(0.3), 250),
-          ),
-          Positioned(
-            top: 150,
-            right: -50,
-            child: _buildHeatmapZone(Colors.yellow.withOpacity(0.3), 300),
-          ),
-          Positioned(
-            bottom: 350,
-            left: 100,
-            child: _buildHeatmapZone(AppColors.mintGreen.withOpacity(0.3), 200),
-          ),
-
-          // Current User Location
-          Positioned(
-            top: 380,
-            left: 150,
-            child: _buildUserLocationMarker(),
-          ),
-
-          // Map Markers
-          Positioned(top: 250, left: 100, child: _buildEmojiMarker("🏥", "City Hospital")),
-          Positioned(top: 450, left: 80, child: _buildEmojiMarker("👮", "Police Station")),
-          Positioned(top: 350, right: 100, child: _buildEmojiMarker("🏪", "24/7 Mart")),
-          Positioned(top: 550, right: 150, child: _buildEmojiMarker("⛽", "Fuel Station")),
-          Positioned(top: 200, right: 80, child: _buildEmojiMarker("🏠", "Safe House")),
-          Positioned(top: 400, left: 220, child: _buildEmojiMarker("👤", "Volunteer")),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeatmapZone(Color color, double size) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: color,
-      ),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-        child: Container(color: Colors.transparent),
-      ),
-    );
-  }
-
-  Widget _buildEmojiMarker(String emoji, String label) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _glassContainer(
-          shape: BoxShape.circle,
-          padding: const EdgeInsets.all(8),
-          child: Text(emoji, style: const TextStyle(fontSize: 18)),
-        ),
-        const SizedBox(height: 4),
-        _glassContainer(
-          borderRadius: BorderRadius.circular(8),
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-          child: Text(label, style: const TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.bold)),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildUserLocationMarker() {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.blue.withOpacity(0.2),
-          ),
-        ),
-        Container(
-          width: 20,
-          height: 20,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.blue,
-            border: Border.all(color: Colors.white, width: 3),
-            boxShadow: [
-              BoxShadow(color: Colors.blue.withOpacity(0.5), blurRadius: 10),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
   // --- UI COMPONENTS ---
   Widget _buildTopHeader() {
     return Row(
@@ -256,16 +192,16 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             height: 55,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             borderRadius: BorderRadius.circular(30),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.search, color: Colors.black),
-                SizedBox(width: 12),
+                const Icon(Icons.search, color: AppColors.primaryDeep),
+                const SizedBox(width: 12),
                 Expanded(
                   child: TextField(
-                    style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600),
+                    style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
                     decoration: InputDecoration(
-                      hintText: "Search destinations...",
-                      hintStyle: TextStyle(color: Colors.black54, fontSize: 14, fontWeight: FontWeight.w600),
+                      hintText: "Search areas in Tamil Nadu...",
+                      hintStyle: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.7), fontSize: 14, fontWeight: FontWeight.w600),
                       border: InputBorder.none,
                     ),
                   ),
@@ -275,52 +211,22 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
           ),
         ),
         const SizedBox(width: 12),
-        _buildCircleIconButton(Icons.notifications_none),
-        const SizedBox(width: 12),
-        _buildCircleIconButton(Icons.settings_outlined),
+        _buildCircleIconButton(Icons.my_location, () {
+          _mapController?.animateCamera(CameraUpdate.newCameraPosition(_initialPosition));
+        }),
       ],
     );
   }
 
-  Widget _buildCircleIconButton(IconData icon) {
-    return _glassContainer(
-      width: 50,
-      height: 50,
-      shape: BoxShape.circle,
-      child: Center(child: Icon(icon, color: Colors.black)),
-    );
-  }
-
-  Widget _buildMapLegend() {
-    if (_showDangerAlert) return const SizedBox.shrink(); // Hide if alert is showing
-    
-    return _glassContainer(
-      padding: const EdgeInsets.all(12),
-      borderRadius: BorderRadius.circular(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildLegendRow(Colors.red.withOpacity(0.6), "High Risk"),
-          const SizedBox(height: 8),
-          _buildLegendRow(Colors.yellow[700]!.withOpacity(0.6), "Medium Risk"),
-          const SizedBox(height: 8),
-          _buildLegendRow(AppColors.mintGreen.withOpacity(0.6), "Safe Zone"),
-        ],
+  Widget _buildCircleIconButton(IconData icon, VoidCallback? onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: _glassContainer(
+        width: 50,
+        height: 50,
+        shape: BoxShape.circle,
+        child: Center(child: Icon(icon, color: AppColors.primaryDeep)),
       ),
-    );
-  }
-
-  Widget _buildLegendRow(Color color, String label) {
-    return Row(
-      children: [
-        Container(
-          width: 14,
-          height: 14,
-          decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(4), border: Border.all(color: Colors.black, width: 0.5)),
-        ),
-        const SizedBox(width: 8),
-        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black)),
-      ],
     );
   }
 
@@ -328,26 +234,26 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     return _glassContainer(
       padding: const EdgeInsets.all(16),
       borderRadius: BorderRadius.circular(20),
-      baseColor: Colors.redAccent.withOpacity(0.2),
-      borderColor: Colors.redAccent.withOpacity(0.6),
+      baseColor: Colors.redAccent.withValues(alpha: 0.1),
+      borderColor: Colors.redAccent.withValues(alpha: 0.4),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.warning_amber_rounded, color: Colors.black, size: 32),
+          const Icon(Icons.warning_amber_rounded, color: AppColors.raspberry, size: 32),
           const SizedBox(width: 12),
           const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("HIGH-RISK ZONE AHEAD", style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 1)),
+                Text("LIVE SAFETY ALERT", style: TextStyle(color: AppColors.raspberry, fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 1)),
                 SizedBox(height: 4),
-                Text("You are approaching an area with low lighting and past security reports (200m).", style: TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.w600)),
+                Text("Analyzing real-time reports in Tamil Nadu. Stay alert in crowded areas.", style: TextStyle(color: AppColors.textPrimary, fontSize: 12, fontWeight: FontWeight.w600)),
               ],
             ),
           ),
           GestureDetector(
             onTap: () => setState(() => _showDangerAlert = false),
-            child: const Icon(Icons.close, color: Colors.black, size: 20),
+            child: const Icon(Icons.close, color: AppColors.textMuted, size: 20),
           ),
         ],
       ),
@@ -359,7 +265,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       width: 50,
       height: 50,
       shape: BoxShape.circle,
-      child: const Center(child: Icon(Icons.mic, color: Colors.black)),
+      child: const Center(child: Icon(Icons.mic, color: AppColors.coral)),
     );
   }
 
@@ -375,17 +281,17 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
               height: 70 * _sosPulseAnimation.value,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.red.withOpacity((1.0 - (_sosPulseAnimation.value - 0.8) * 1.5).clamp(0.0, 1.0)),
+                color: AppColors.raspberry.withValues(alpha: (1.0 - (_sosPulseAnimation.value - 0.8) * 1.5).clamp(0.0, 1.0)),
               ),
             ),
             _glassContainer(
               width: 70,
               height: 70,
               shape: BoxShape.circle,
-              baseColor: Colors.redAccent.withOpacity(0.3),
-              borderColor: Colors.redAccent.withOpacity(0.8),
+              baseColor: AppColors.raspberry.withValues(alpha: 0.3),
+              borderColor: AppColors.raspberry.withValues(alpha: 0.8),
               child: const Center(
-                child: Text("SOS", style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 20, letterSpacing: 1)),
+                child: Text("SOS", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 20, letterSpacing: 1)),
               ),
             ),
           ],
@@ -398,54 +304,35 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     return _glassContainer(
       borderRadius: const BorderRadius.only(topLeft: Radius.circular(30), topRight: Radius.circular(30)),
       padding: const EdgeInsets.all(24),
+      baseColor: Colors.white.withValues(alpha: 0.95),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Drag handle
-          Container(width: 50, height: 5, decoration: BoxDecoration(color: Colors.black.withOpacity(0.3), borderRadius: BorderRadius.circular(10))),
+          Container(width: 50, height: 5, decoration: BoxDecoration(color: AppColors.textMuted.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(10))),
           const SizedBox(height: 20),
-          
-          // Live Stats Row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildStatItem("Risk Level", "MEDIUM"),
+              _buildStatItem("Zone Status", "SAFE"),
               _buildVerticalDivider(),
-              _buildStatItem("Safe Nearby", "12"),
+              _buildStatItem("Nearby Help", "24"),
               _buildVerticalDivider(),
-              _buildStatItem("Volunteers", "4"),
+              _buildStatItem("Alerts", "0"),
             ],
           ),
           const SizedBox(height: 20),
-          
-          // Environmental Row
-          _glassContainer(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            borderRadius: BorderRadius.circular(16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildEnvIndicator(Icons.wb_sunny_outlined, "Well Lit"),
-                Container(width: 1, height: 20, color: Colors.black.withOpacity(0.2)),
-                _buildEnvIndicator(Icons.groups_outlined, "Moderate Crowd"),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-          
-          // Action Buttons Row
           Row(
             children: [
               Expanded(
                 child: _glassContainer(
-                  baseColor: AppColors.softPurple.withOpacity(0.35),
-                  borderColor: AppColors.softPurple.withOpacity(0.7),
+                  baseColor: AppColors.primaryLight.withValues(alpha: 0.5),
+                  borderColor: AppColors.primaryDeep.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(16),
                   child: InkWell(
                     onTap: _showRouteComparison,
                     child: const Padding(
                       padding: EdgeInsets.symmetric(vertical: 16),
-                      child: Center(child: Text("Safe Route", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black))),
+                      child: Center(child: Text("Tamil Nadu Districts", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.primaryDeep))),
                     ),
                   ),
                 ),
@@ -453,14 +340,14 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
               const SizedBox(width: 16),
               Expanded(
                 child: _glassContainer(
-                  baseColor: Colors.teal.withOpacity(0.35),
-                  borderColor: Colors.teal.withOpacity(0.7),
+                  baseColor: AppColors.mintGreen.withValues(alpha: 0.3),
+                  borderColor: AppColors.mintGreen,
                   borderRadius: BorderRadius.circular(16),
                   child: InkWell(
                     onTap: () {},
                     child: const Padding(
                       padding: EdgeInsets.symmetric(vertical: 16),
-                      child: Center(child: Text("Safety Mode", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black))),
+                      child: Center(child: Text("Safe Route", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary))),
                     ),
                   ),
                 ),
@@ -468,15 +355,13 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             ],
           ),
           const SizedBox(height: 24),
-          
-          // Quick Navigation Row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildQuickNav(Icons.local_hospital_rounded, "Hospital", Colors.redAccent.withOpacity(0.2)),
-              _buildQuickNav(Icons.local_police_rounded, "Police", Colors.blueAccent.withOpacity(0.2)),
-              _buildQuickNav(Icons.local_gas_station_rounded, "Fuel", Colors.orangeAccent.withOpacity(0.2)),
-              _buildQuickNav(Icons.storefront_rounded, "Shop", AppColors.softPurple.withOpacity(0.2)),
+              _buildQuickNav(Icons.local_hospital_rounded, "Hospital", Colors.redAccent.withValues(alpha: 0.1)),
+              _buildQuickNav(Icons.local_police_rounded, "Police", Colors.blueAccent.withValues(alpha: 0.1)),
+              _buildQuickNav(Icons.local_gas_station_rounded, "Fuel", Colors.orangeAccent.withValues(alpha: 0.1)),
+              _buildQuickNav(Icons.storefront_rounded, "24x7", AppColors.softPurple.withValues(alpha: 0.1)),
             ],
           ),
         ],
@@ -487,25 +372,15 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   Widget _buildStatItem(String title, String value) {
     return Column(
       children: [
-        Text(title, style: const TextStyle(color: Colors.black, fontSize: 11, fontWeight: FontWeight.bold)),
+        Text(title, style: const TextStyle(color: AppColors.textMuted, fontSize: 11, fontWeight: FontWeight.bold)),
         const SizedBox(height: 4),
-        Text(value, style: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w900)),
+        Text(value, style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w900)),
       ],
     );
   }
 
   Widget _buildVerticalDivider() {
-    return Container(width: 1, height: 30, color: Colors.black.withOpacity(0.2));
-  }
-
-  Widget _buildEnvIndicator(IconData icon, String label) {
-    return Row(
-      children: [
-        Icon(icon, size: 18, color: Colors.black),
-        const SizedBox(width: 8),
-        Text(label, style: const TextStyle(color: Colors.black, fontSize: 13, fontWeight: FontWeight.bold)),
-      ],
-    );
+    return Container(width: 1, height: 30, color: AppColors.textMuted.withValues(alpha: 0.2));
   }
 
   Widget _buildQuickNav(IconData icon, String label, Color bgColor) {
@@ -517,69 +392,44 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             height: 50,
             shape: BoxShape.circle,
             baseColor: bgColor,
-            child: Center(child: Icon(icon, color: Colors.black)),
+            child: Center(child: Icon(icon, color: AppColors.primaryDeep)),
           ),
           const SizedBox(height: 8),
-          Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black)),
+          Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
         ],
       ),
     );
   }
 
-  // --- ROUTE COMPARISON BOTTOM SHEET ---
   Widget _buildRouteComparisonSheet() {
     return _glassContainer(
       borderRadius: const BorderRadius.only(topLeft: Radius.circular(30), topRight: Radius.circular(30)),
       padding: const EdgeInsets.all(24),
+      baseColor: Colors.white,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Center(
-            child: Container(width: 50, height: 5, decoration: BoxDecoration(color: Colors.black.withOpacity(0.3), borderRadius: BorderRadius.circular(10))),
+            child: Container(width: 50, height: 5, decoration: BoxDecoration(color: AppColors.textMuted.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(10))),
           ),
           const SizedBox(height: 24),
-          const Text("Select Route", style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Colors.black)),
+          const Text("District Insights", style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
           const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                child: _buildRouteOptionCard(
-                  title: "Safe Route",
-                  time: "24 min",
-                  distance: "6.2 km",
-                  baseColor: AppColors.mintGreen.withOpacity(0.3),
-                  isSelected: true,
-                  features: ["Well-lit roads", "3 Police Stations", "Many active users"],
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildRouteOptionCard(
-                  title: "Shortest Route",
-                  time: "18 min",
-                  distance: "4.5 km",
-                  baseColor: Colors.redAccent.withOpacity(0.3),
-                  isSelected: false,
-                  features: ["Low lighting", "High crime area", "Fewer shops nearby"],
-                ),
-              ),
-            ],
-          ),
+          _buildDistrictItem("Chennai", "Strategic Surveillance Active"),
+          _buildDistrictItem("Coimbatore", "Enhanced Patrol Zones"),
+          _buildDistrictItem("Madurai", "24/7 Safety Corridors"),
           const SizedBox(height: 30),
           SizedBox(
             width: double.infinity,
-            child: _glassContainer(
-              baseColor: Colors.black.withOpacity(0.15),
-              borderColor: Colors.black.withOpacity(0.6),
-              borderRadius: BorderRadius.circular(16),
-              child: InkWell(
-                onTap: () => Navigator.pop(context),
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 18),
-                  child: Center(child: Text("Start Safe Navigation", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.black))),
-                ),
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryDeep,
+                padding: const EdgeInsets.symmetric(vertical: 18),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
+              child: const Text("CLOSE", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white)),
             ),
           ),
         ],
@@ -587,64 +437,25 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildRouteOptionCard({required String title, required String time, required String distance, required Color baseColor, required bool isSelected, required List<String> features}) {
-    return _glassContainer(
-      padding: const EdgeInsets.all(16),
-      baseColor: isSelected ? baseColor : Colors.white.withOpacity(0.1),
-      borderColor: isSelected ? Colors.black.withOpacity(0.6) : Colors.white.withOpacity(0.3),
-      borderRadius: BorderRadius.circular(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildDistrictItem(String name, String status) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          const Icon(Icons.location_on, color: AppColors.coral),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 13)),
-              if (isSelected) const Icon(Icons.check_circle, color: Colors.black, size: 18),
+              Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              Text(status, style: const TextStyle(color: AppColors.textMuted, fontSize: 12)),
             ],
-          ),
-          const SizedBox(height: 8),
-          Text(time, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.black)),
-          Text(distance, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black)),
-          const SizedBox(height: 16),
-          ...features.map((f) => Padding(
-            padding: const EdgeInsets.only(bottom: 6),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(isSelected ? Icons.check : Icons.warning_amber_rounded, size: 14, color: Colors.black),
-                const SizedBox(width: 4),
-                Expanded(child: Text(f, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black))),
-              ],
-            ),
-          )),
+          )
         ],
       ),
     );
   }
-}
 
-// Background painter for simulated map grid
-class GridPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    var paint = Paint()
-      ..color = Colors.grey.withOpacity(0.3)
-      ..strokeWidth = 1.0;
-      
-    double step = 50;
-    
-    // Vertical lines
-    for (double i = 0; i < size.width; i += step) {
-      canvas.drawLine(Offset(i, 0), Offset(i, size.height), paint);
-    }
-    
-    // Horizontal lines
-    for (double i = 0; i < size.height; i += step) {
-      canvas.drawLine(Offset(0, i), Offset(size.width, i), paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  // Optional: Custom Map Style String (JSON)
+  final String _mapStyle = ""; 
 }

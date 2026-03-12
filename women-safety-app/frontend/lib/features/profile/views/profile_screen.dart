@@ -50,7 +50,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Colors.white.withOpacity(0.95),
+        backgroundColor: Colors.white.withValues(alpha: 0.95),
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text("Emergency Call", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
@@ -79,85 +79,79 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: AppColors.premiumGradient,
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              const SizedBox(height: 20),
-              _buildGreetingHeader(),
-              const SizedBox(height: 20),
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.all(20),
-                  physics: const BouncingScrollPhysics(),
-                  children: [
-                    _buildGlassCollapsibleCard(
-                      'sos',
-                      'SOS Preferences',
-                      Icons.error_outline_rounded,
-                      Colors.redAccent,
-                      _buildSOSPreferencesContent(),
-                    ),
-                    _buildGlassCollapsibleCard(
-                      'helplines',
-                      'Emergency Helplines',
-                      Icons.phone_callback_rounded,
-                      AppColors.mintGreen,
-                      _buildHelplinesContent(),
-                    ),
-                    _buildGlassCollapsibleCard(
-                      'personal',
-                      'Basic Personal Info',
-                      Icons.person_outline_rounded,
-                      AppColors.softPurple,
-                      _buildPersonalInfoContent(),
-                    ),
-                    _buildGlassCollapsibleCard(
-                      'contacts',
-                      'Emergency Contacts',
-                      Icons.people_outline_rounded,
-                      AppColors.skyBlue,
-                      _buildEmergencyContactsContent(),
-                    ),
-                    _buildGlassCollapsibleCard(
-                      'location',
-                      'Location & Safety',
-                      Icons.map_outlined,
-                      AppColors.mintGreen,
-                      _buildLocationSafetyContent(),
-                    ),
-                    _buildGlassCollapsibleCard(
-                      'privacy',
-                      'Privacy & Security',
-                      Icons.lock_outline_rounded,
-                      AppColors.softPurple,
-                      _buildPrivacySecurityContent(),
-                    ),
-                    _buildGlassCollapsibleCard(
-                      'history',
-                      'Safety Activity History',
-                      Icons.history_rounded,
-                      AppColors.skyBlue,
-                      _buildHistoryContent(),
-                    ),
-                    _buildGlassCollapsibleCard(
-                      'settings',
-                      'App Settings',
-                      Icons.settings_outlined,
-                      Colors.white70,
-                      _buildAppSettingsContent(),
-                    ),
-                    const SizedBox(height: 80), // Padding for bottom nav
-                  ],
-                ),
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Column(
+          children: [
+            const SizedBox(height: 20),
+            _buildGreetingHeader(),
+            const SizedBox(height: 20),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.all(20),
+                physics: const BouncingScrollPhysics(),
+                children: [
+                  _buildGlassCollapsibleCard(
+                    'sos',
+                    'SOS Preferences',
+                    Icons.error_outline_rounded,
+                    Colors.redAccent,
+                    _buildSOSPreferencesContent(),
+                  ),
+                  _buildGlassCollapsibleCard(
+                    'helplines',
+                    'Emergency Helplines',
+                    Icons.phone_callback_rounded,
+                    AppColors.mintGreen,
+                    _buildHelplinesContent(),
+                  ),
+                  _buildGlassCollapsibleCard(
+                    'personal',
+                    'Basic Personal Info',
+                    Icons.person_outline_rounded,
+                    AppColors.softPurple,
+                    _buildPersonalInfoContent(),
+                  ),
+                  _buildGlassCollapsibleCard(
+                    'contacts',
+                    'Emergency Contacts',
+                    Icons.people_outline_rounded,
+                    AppColors.skyBlue,
+                    _buildEmergencyContactsContent(),
+                  ),
+                  _buildGlassCollapsibleCard(
+                    'location',
+                    'Location & Safety',
+                    Icons.map_outlined,
+                    AppColors.mintGreen,
+                    _buildLocationSafetyContent(),
+                  ),
+                  _buildGlassCollapsibleCard(
+                    'privacy',
+                    'Privacy & Security',
+                    Icons.lock_outline_rounded,
+                    AppColors.softPurple,
+                    _buildPrivacySecurityContent(),
+                  ),
+                  _buildGlassCollapsibleCard(
+                    'history',
+                    'Safety Activity History',
+                    Icons.history_rounded,
+                    AppColors.skyBlue,
+                    _buildHistoryContent(),
+                  ),
+                  _buildGlassCollapsibleCard(
+                    'settings',
+                    'App Settings',
+                    Icons.settings_outlined,
+                    Colors.white70,
+                    _buildAppSettingsContent(),
+                  ),
+                  const SizedBox(height: 80), // Padding for bottom nav
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -168,7 +162,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       decoration: BoxDecoration(
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -188,22 +182,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.15),
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(50),
                 border: Border.all(color: AppColors.glassBorder),
+                boxShadow: const [
+                  BoxShadow(
+                    color: AppColors.cardShadow,
+                    blurRadius: 10,
+                  ),
+                ],
               ),
               child: const Text(
-                "Hi Graceful",
+                "Profile Settings",
                 style: TextStyle(
                   fontFamily: 'Playfair Display',
                   fontSize: 26,
                   fontWeight: FontWeight.w700,
                   fontStyle: FontStyle.italic,
-                  color: Colors.black,
+                  color: AppColors.textPrimary,
                   letterSpacing: 0.5,
-                  shadows: [
-                    Shadow(color: Colors.black26, offset: Offset(0, 2), blurRadius: 4),
-                  ],
                 ),
               ),
             ),
@@ -228,7 +225,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -246,9 +243,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             Container(
               decoration: BoxDecoration(
-                color: AppColors.glassSurface,
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(color: AppColors.glassBorder),
+                boxShadow: const [
+                  BoxShadow(
+                    color: AppColors.cardShadow,
+                    blurRadius: 10,
+                  ),
+                ],
               ),
               child: Column(
                 children: [
@@ -264,7 +267,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               Container(
                                 padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
-                                  color: iconColor.withOpacity(0.2),
+                                  color: iconColor.withValues(alpha: 0.2),
                                   shape: BoxShape.circle,
                                 ),
                                 child: Icon(icon, color: iconColor, size: 28),
@@ -273,7 +276,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               Text(
                                 title,
                                 style: const TextStyle(
-                                  color: Colors.black,
+                                  color: AppColors.textPrimary,
                                   fontSize: 18,
                                   fontWeight: FontWeight.w600,
                                   letterSpacing: 0.5,
@@ -283,7 +286,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           Icon(
                             isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                            color: Colors.black,
+                            color: AppColors.textPrimary,
                             size: 30,
                           ),
                         ],
@@ -318,7 +321,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Switch(
             value: true,
             onChanged: (v) {},
-            activeColor: AppColors.mintGreen,
+            activeThumbColor: AppColors.mintGreen,
           ),
         ),
         const SizedBox(height: 10),
@@ -332,7 +335,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               style: const TextStyle(color: Colors.black, fontSize: 14),
               decoration: InputDecoration(
                 filled: true,
-                fillColor: Colors.white.withOpacity(0.05),
+                fillColor: Colors.white.withValues(alpha: 0.05),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.glassBorder)),
                 hintText: "I am in an emergency...",
                 hintStyle: const TextStyle(color: Colors.white38),
@@ -401,7 +404,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.15),
+          color: Colors.white.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: AppColors.glassBorder),
         ),
@@ -414,7 +417,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
+                color: color.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
               child: iconWidget,
@@ -447,7 +450,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.redAccent.withOpacity(0.3),
+                    color: Colors.redAccent.withValues(alpha: 0.3),
                     spreadRadius: 1,
                     blurRadius: 4,
                     offset: const Offset(0, 2),
@@ -498,7 +501,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildLocationSafetyContent() {
     return Column(
       children: [
-        _buildSettingRow("Live Location Sharing", Switch(value: false, onChanged: (v) {}, activeColor: AppColors.mintGreen)),
+        _buildSettingRow("Live Location Sharing", Switch(value: false, onChanged: (v) {}, activeThumbColor: AppColors.mintGreen)),
         _buildSettingRow("Auto-share location on SOS", const Icon(Icons.check_box, color: AppColors.skyBlue)),
         const SizedBox(height: 10),
         const Row(
@@ -516,7 +519,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Column(
       children: [
         _buildSettingRow("Change Password", const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.black87)),
-        _buildSettingRow("Biometric Auth", Switch(value: true, onChanged: (v) {}, activeColor: AppColors.mintGreen)),
+        _buildSettingRow("Biometric Auth", Switch(value: true, onChanged: (v) {}, activeThumbColor: AppColors.mintGreen)),
       ],
     );
   }
@@ -575,10 +578,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(label, style: const TextStyle(color: Colors.black54, fontSize: 12)),
-              Text(value, style: const TextStyle(color: Colors.black, fontSize: 14, fontWeight: FontWeight.w500)),
+              Text(value, style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w500)),
             ],
           ),
-          const Icon(Icons.edit_outlined, size: 16, color: AppColors.skyBlue),
+          const Icon(Icons.edit_outlined, size: 16, color: AppColors.primaryDeep),
         ],
       ),
     );
@@ -596,7 +599,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isTest ? Colors.white.withOpacity(0.1) : Colors.white.withOpacity(0.15),
+          color: isTest ? Colors.white.withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: AppColors.glassBorder),
         ),
@@ -607,7 +610,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: isTest ? Colors.grey.withOpacity(0.2) : Colors.redAccent.withOpacity(0.2), 
+                color: isTest ? Colors.grey.withValues(alpha: 0.2) : Colors.redAccent.withValues(alpha: 0.2), 
                 shape: BoxShape.circle
               ),
               child: iconWidget,
@@ -631,7 +634,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   SnackBar(content: Text('Added $label to Speed Dial/SOS Quick Access.')),
                 );
               },
-              icon: Icon(Icons.star_border, color: AppColors.softPurple),
+              icon: const Icon(Icons.star_border, color: AppColors.softPurple),
               tooltip: "Add to SOS Quick Access",
             ),
             const SizedBox(width: 12),

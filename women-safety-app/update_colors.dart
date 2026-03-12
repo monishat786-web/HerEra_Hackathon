@@ -1,7 +1,6 @@
 import 'dart:io';
 
 void main() {
-  Directory dir = Directory('frontend/lib/features');
   var files = [
     'frontend/lib/features/home/views/home_screen.dart',
     'frontend/lib/features/profile/views/profile_screen.dart',

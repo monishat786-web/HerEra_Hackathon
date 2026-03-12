@@ -8,14 +8,9 @@ class CommunityScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: AppColors.premiumGradient,
-        ),
-        child: SafeArea(
-          child: Column(
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Column(
             children: [
               const SizedBox(height: 20),
               _buildHeader(),
@@ -72,8 +67,7 @@ class CommunityScreen extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildHeader() {
@@ -81,7 +75,7 @@ class CommunityScreen extends StatelessWidget {
       decoration: BoxDecoration(
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -101,9 +95,15 @@ class CommunityScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.15),
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(50),
                 border: Border.all(color: AppColors.glassBorder),
+                boxShadow: const [
+                  BoxShadow(
+                    color: AppColors.cardShadow,
+                    blurRadius: 10,
+                  ),
+                ],
               ),
               child: const Text(
                 "Community Alerts",
@@ -112,11 +112,8 @@ class CommunityScreen extends StatelessWidget {
                   fontSize: 26,
                   fontWeight: FontWeight.w700,
                   fontStyle: FontStyle.italic,
-                  color: Colors.black,
+                  color: AppColors.textPrimary,
                   letterSpacing: 0.5,
-                  shadows: [
-                    Shadow(color: Colors.black26, offset: Offset(0, 2), blurRadius: 4),
-                  ],
                 ),
               ),
             ),
@@ -133,8 +130,8 @@ class CommunityScreen extends StatelessWidget {
         const SizedBox(width: 10),
         Text(
           title,
-          style: TextStyle(
-            color: Colors.black87,
+          style: const TextStyle(
+            color: AppColors.textSecondary,
             fontSize: 14,
             fontWeight: FontWeight.bold,
             letterSpacing: 1.5,
@@ -150,7 +147,7 @@ class CommunityScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.redAccent.withOpacity(0.3),
+            color: Colors.redAccent.withValues(alpha: 0.3),
             blurRadius: 20,
             spreadRadius: 2,
             offset: const Offset(0, 8),
@@ -169,9 +166,9 @@ class CommunityScreen extends StatelessWidget {
             ),
             Container(
               decoration: BoxDecoration(
-                color: Colors.redAccent.withOpacity(0.15),
+                color: Colors.redAccent.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: Colors.redAccent.withOpacity(0.5), width: 1.5),
+                border: Border.all(color: Colors.redAccent.withValues(alpha: 0.5), width: 1.5),
               ),
               child: Column(
                 children: [
@@ -185,7 +182,7 @@ class CommunityScreen extends StatelessWidget {
                           height: 50,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                             border: Border.all(color: Colors.redAccent, width: 2),
                           ),
                           child: const Icon(Icons.person, color: Colors.black, size: 28),
@@ -210,7 +207,7 @@ class CommunityScreen extends StatelessWidget {
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                     decoration: BoxDecoration(
-                                      color: Colors.redAccent.withOpacity(0.2),
+                                      color: Colors.redAccent.withValues(alpha: 0.2),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: const Text(
@@ -234,11 +231,11 @@ class CommunityScreen extends StatelessWidget {
                                 children: [
                                   Container(
                                      padding: const EdgeInsets.all(4),
-                                     decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), shape: BoxShape.circle),
+                                     decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.1), shape: BoxShape.circle),
                                      child: const Icon(Icons.location_on, size: 14, color: Colors.black)
                                   ),
                                   const SizedBox(width: 6),
-                                  Text(
+                                  const Text(
                                     "View Live Location Map",
                                     style: TextStyle(color: Colors.black, fontSize: 13, decoration: TextDecoration.underline),
                                   ),
@@ -254,8 +251,8 @@ class CommunityScreen extends StatelessWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.1),
-                      border: Border(top: BorderSide(color: Colors.white.withOpacity(0.1))),
+                      color: Colors.black.withValues(alpha: 0.1),
+                      border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.1))),
                     ),
                     child: ElevatedButton.icon(
                       onPressed: () {},
@@ -288,7 +285,7 @@ class CommunityScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -307,9 +304,15 @@ class CommunityScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.glassSurface,
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: AppColors.glassBorder),
+                boxShadow: const [
+                  BoxShadow(
+                    color: AppColors.cardShadow,
+                    blurRadius: 10,
+                  ),
+                ],
               ),
               child: Row(
                 children: [
@@ -318,8 +321,8 @@ class CommunityScreen extends StatelessWidget {
                     height: 44,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.redAccent.withOpacity(0.15),
-                      border: Border.all(color: Colors.redAccent.withOpacity(0.3)),
+                      color: Colors.redAccent.withValues(alpha: 0.05),
+                      border: Border.all(color: Colors.redAccent.withValues(alpha: 0.2)),
                     ),
                     child: const Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 24),
                   ),
@@ -330,19 +333,19 @@ class CommunityScreen extends StatelessWidget {
                       children: [
                         Text(
                           "SOS from $name",
-                          style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16),
+                          style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 16),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           distance,
-                          style: TextStyle(color: Colors.black87, fontSize: 14),
+                          style: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
                         ),
                       ],
                     ),
                   ),
                   Text(
                     time,
-                    style: TextStyle(color: Colors.black54, fontSize: 13, fontWeight: FontWeight.w500),
+                    style: const TextStyle(color: AppColors.textMuted, fontSize: 13, fontWeight: FontWeight.w500),
                   ),
                 ],
               ),
@@ -367,7 +370,7 @@ class CommunityScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -385,9 +388,15 @@ class CommunityScreen extends StatelessWidget {
             ),
             Container(
               decoration: BoxDecoration(
-                color: AppColors.glassSurface,
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: AppColors.glassBorder),
+                boxShadow: const [
+                  BoxShadow(
+                    color: AppColors.cardShadow,
+                    blurRadius: 10,
+                  ),
+                ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -404,16 +413,16 @@ class CommunityScreen extends StatelessWidget {
                               children: [
                                 const CircleAvatar(
                                   radius: 14,
-                                  backgroundColor: Colors.white24,
-                                  child: Icon(Icons.person_outline, size: 16, color: Colors.black),
+                                  backgroundColor: AppColors.primaryLight,
+                                  child: Icon(Icons.person_outline, size: 16, color: AppColors.primaryDeep),
                                 ),
                                 const SizedBox(width: 10),
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                   decoration: BoxDecoration(
-                                    color: badgeColor.withOpacity(0.2),
+                                    color: badgeColor.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: badgeColor.withOpacity(0.5)),
+                                    border: Border.all(color: badgeColor.withValues(alpha: 0.3)),
                                   ),
                                   child: Text(
                                     badge,
@@ -424,23 +433,23 @@ class CommunityScreen extends StatelessWidget {
                             ),
                             Text(
                               time,
-                              style: TextStyle(color: Colors.black54, fontSize: 12, fontWeight: FontWeight.w500),
+                              style: const TextStyle(color: AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.w500),
                             ),
                           ],
                         ),
                         const SizedBox(height: 14),
                         Text(
                           title,
-                          style: const TextStyle(color: Colors.black, fontSize: 17, fontWeight: FontWeight.w600),
+                          style: const TextStyle(color: AppColors.textPrimary, fontSize: 17, fontWeight: FontWeight.w600),
                         ),
                         const SizedBox(height: 8),
                         Row(
                           children: [
-                            const Icon(Icons.location_on_outlined, color: Colors.black87, size: 18),
+                            const Icon(Icons.location_on_outlined, color: AppColors.textSecondary, size: 18),
                             const SizedBox(width: 6),
                             Text(
                               location,
-                              style: const TextStyle(color: Colors.black87, fontSize: 14),
+                              style: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
                             ),
                           ],
                         ),
@@ -448,7 +457,7 @@ class CommunityScreen extends StatelessWidget {
                           const SizedBox(height: 12),
                           Text(
                             description,
-                            style: TextStyle(color: Colors.black87, fontSize: 14, height: 1.4),
+                            style: const TextStyle(color: AppColors.textSecondary, fontSize: 14, height: 1.4),
                           ),
                         ]
                       ],
@@ -458,11 +467,11 @@ class CommunityScreen extends StatelessWidget {
                     Container(
                       width: double.infinity,
                       decoration: BoxDecoration(
-                        border: Border(top: BorderSide(color: Colors.white.withOpacity(0.1))),
+                        border: Border(top: BorderSide(color: AppColors.glassBorder)),
                       ),
-                      child: Padding(
-                         padding: const EdgeInsets.symmetric(vertical: 8),
-                         child: Icon(Icons.keyboard_arrow_up, color: Colors.black54),
+                      child: const Padding(
+                         padding: EdgeInsets.symmetric(vertical: 8),
+                         child: Icon(Icons.keyboard_arrow_up, color: AppColors.textMuted),
                       ),
                     )
                 ],
@@ -481,7 +490,7 @@ class CommunityScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.orange.withOpacity(0.3),
+            color: Colors.orange.withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 4),
           ),
@@ -500,18 +509,18 @@ class CommunityScreen extends StatelessWidget {
             ElevatedButton(
               onPressed: () {},
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange.withOpacity(0.8),
+                backgroundColor: Colors.orange.withValues(alpha: 0.8),
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 18),
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
-                  side: BorderSide(color: Colors.orangeAccent.withOpacity(0.5)),
+                  side: BorderSide(color: Colors.orangeAccent.withValues(alpha: 0.5)),
                 ),
               ),
-              child: Row(
+              child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
+                children: [
                   Icon(Icons.add_alert_rounded, size: 22),
                   SizedBox(width: 10),
                   Text(

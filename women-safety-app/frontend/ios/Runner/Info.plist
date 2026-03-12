@@ -66,5 +66,11 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>herERA needs your location to provide real-time safety tracking and nearby help centers.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>herERA needs background location access to monitor your safety even when the app is minimized.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>herERA needs location access to ensure continuous protection during your travels.</string>
 </dict>
 </plist>

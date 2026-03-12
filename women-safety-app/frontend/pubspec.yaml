@@ -26,6 +26,9 @@ dependencies:
   geolocator: ^10.1.0
   flutter_staggered_animations: ^1.0.0
   url_launcher: ^6.3.2
+  record: ^5.1.0
+  noise_meter: ^4.0.0
+  path_provider: ^2.1.2
 
 dev_dependencies:
   flutter_test:
@@ -36,6 +39,3 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
-    - assets/icons/
-    - assets/fonts/
-    - assets/animations/
