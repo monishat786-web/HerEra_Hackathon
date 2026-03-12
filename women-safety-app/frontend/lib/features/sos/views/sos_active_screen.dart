@@ -57,18 +57,21 @@ class _SOSActiveScreenState extends State<SOSActiveScreen> with TickerProviderSt
           ),
         ),
         child: SafeArea(
-          child: Column(
-            children: [
-              const SizedBox(height: 48),
-              _buildHighTechHeader(),
-              const Spacer(),
-              _buildForensicMap(),
-              const Spacer(),
-              _buildEmergencyStatus(),
-              const SizedBox(height: 48),
-              _buildCancelAction(),
-              const SizedBox(height: 40),
-            ],
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Column(
+              children: [
+                const SizedBox(height: 48),
+                _buildHighTechHeader(),
+                const SizedBox(height: 40),
+                _buildForensicMap(),
+                const SizedBox(height: 40),
+                _buildEmergencyStatus(),
+                const SizedBox(height: 48),
+                _buildCancelAction(),
+                const SizedBox(height: 40),
+              ],
+            ),
           ),
         ),
       ),

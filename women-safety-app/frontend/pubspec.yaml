@@ -30,6 +30,9 @@ dependencies:
   noise_meter: ^5.1.0
   path_provider: ^2.1.2
   sensors_plus: ^7.0.0
+  audioplayers: ^5.2.1
+  uuid: ^4.3.3
+  intl: ^0.18.1
 
 dev_dependencies:
   flutter_test:

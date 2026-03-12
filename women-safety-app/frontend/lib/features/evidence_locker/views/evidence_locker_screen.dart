@@ -1,8 +1,57 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:audioplayers/audioplayers.dart';
+import '../models/evidence_item.dart';
+import '../services/evidence_storage_service.dart';
+import 'package:intl/intl.dart';
 
-class EvidenceLockerScreen extends StatelessWidget {
+class EvidenceLockerScreen extends StatefulWidget {
   const EvidenceLockerScreen({super.key});
+
+  @override
+  State<EvidenceLockerScreen> createState() => _EvidenceLockerScreenState();
+}
+
+class _EvidenceLockerScreenState extends State<EvidenceLockerScreen> {
+  final EvidenceStorageService _storageService = EvidenceStorageService();
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  List<EvidenceItem> _evidenceItems = [];
+  bool _isLoading = true;
+  String? _playingPath;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadEvidence();
+  }
+
+  Future<void> _loadEvidence() async {
+    setState(() => _isLoading = true);
+    final items = await _storageService.getEvidenceItems();
+    setState(() {
+      _evidenceItems = items.reversed.toList(); // Newest first
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _togglePlayback(String path) async {
+    if (_playingPath == path) {
+      await _audioPlayer.stop();
+      setState(() => _playingPath = null);
+    } else {
+      await _audioPlayer.play(DeviceFileSource(path));
+      setState(() => _playingPath = path);
+      _audioPlayer.onPlayerComplete.listen((event) {
+        if (mounted) setState(() => _playingPath = null);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,21 +69,155 @@ class EvidenceLockerScreen extends StatelessWidget {
             fontSize: 20,
           ),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded, color: Colors.black87),
+            onPressed: _loadEvidence,
+          ),
+        ],
       ),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Column(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                children: [
+                  const SizedBox(height: 12),
+                  _buildVaultSummaryCard(),
+                  const SizedBox(height: 20),
+                  _buildFilterTabs(),
+                  const SizedBox(height: 16),
+                  if (_evidenceItems.isEmpty)
+                    _buildEmptyState()
+                  else
+                    ..._evidenceItems.map((item) => _buildEvidenceCard(item)),
+                  const SizedBox(height: 40),
+                ],
+              ),
+            ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 60),
+      child: Column(
+        children: [
+          Icon(Icons.inventory_2_outlined, size: 80, color: Colors.grey[300]),
+          const SizedBox(height: 16),
+          Text(
+            "No evidence captured yet",
+            style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.grey[500]),
+          ),
+          Text(
+            "Captured SOS data will appear here.",
+            style: GoogleFonts.inter(fontSize: 13, color: Colors.grey[400]),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEvidenceCard(EvidenceItem item) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: _buildMediaCard(
+        title: item.type == EvidenceType.audio ? "Audio Evidence" : "SOS Log",
+        color: item.description?.contains("Scream") == true ? const Color(0xFFDC2626) : const Color(0xFF8B5CF6),
+        item: item,
+        content: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (item.type == EvidenceType.audio)
+              _buildAudioPlayer(item.path),
             const SizedBox(height: 12),
-            _buildVaultSummaryCard(),
-            const SizedBox(height: 20),
-            _buildFilterTabs(),
-            const SizedBox(height: 16),
-            _buildEvidenceList(),
-            const SizedBox(height: 40),
+            Row(
+              children: [
+                const Icon(Icons.location_on_rounded, size: 14, color: Colors.grey),
+                const SizedBox(width: 4),
+                Text(
+                  item.location ?? "Unknown Location",
+                  style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.w500),
+                ),
+                const Spacer(),
+                Text(
+                  DateFormat('HH:mm a').format(item.timestamp),
+                  style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.w500),
+                ),
+              ],
+            ),
+            if (item.description != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                item.description!,
+                style: GoogleFonts.inter(fontSize: 11, color: Colors.grey[500], fontStyle: FontStyle.italic),
+              ),
+            ],
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildAudioPlayer(String path) {
+    bool isPlaying = _playingPath == path;
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
+      ),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () => _togglePlayback(path),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: const BoxDecoration(
+                color: Colors.black,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                isPlaying ? Icons.stop_rounded : Icons.play_arrow_rounded,
+                color: Colors.white,
+                size: 24,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      isPlaying ? "Playing..." : "Record snippet",
+                      style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      isPlaying ? "LIVE" : "0:12", // Mock duration
+                      style: GoogleFonts.inter(fontSize: 10, color: Colors.grey),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(2),
+                  child: LinearProgressIndicator(
+                    value: isPlaying ? null : 0.0,
+                    backgroundColor: Colors.grey[300],
+                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.black),
+                    minHeight: 4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -64,7 +247,7 @@ class EvidenceLockerScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.baseline,
                 textBaseline: TextBaseline.alphabetic,
                 children: [
-                  Text("24", style: GoogleFonts.inter(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.black87)),
+                  Text("${_evidenceItems.length}", style: GoogleFonts.inter(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.black87)),
                   const SizedBox(width: 6),
                   Text("Items Stored", style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.grey[700])),
                 ],
@@ -72,7 +255,7 @@ class EvidenceLockerScreen extends StatelessWidget {
               RichText(
                 text: TextSpan(
                   children: [
-                    TextSpan(text: "1.2 GB", style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black87)),
+                    TextSpan(text: "0.4 GB", style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black87)),
                     TextSpan(text: " / 5 GB", style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey[600])),
                   ],
                 ),
@@ -83,19 +266,11 @@ class EvidenceLockerScreen extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
-              value: 1.2 / 5.0,
+              value: 0.4 / 5.0,
               backgroundColor: Colors.grey[200],
               valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF4B5563)),
               minHeight: 8,
             ),
-          ),
-          const SizedBox(height: 6),
-          Row(
-             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-             children: [
-               Text("1.2 GB", style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey[500])),
-               Text("5 GB", style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey[500])),
-             ],
           ),
           const SizedBox(height: 20),
           Center(
@@ -111,7 +286,7 @@ class EvidenceLockerScreen extends StatelessWidget {
                   const Icon(Icons.verified_user_rounded, color: Colors.black, size: 14),
                   const SizedBox(width: 6),
                   Text(
-                    "All Evidence Anchored",
+                    "Blockchain Protected",
                     style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87),
                   ),
                 ],
@@ -133,7 +308,6 @@ class EvidenceLockerScreen extends StatelessWidget {
           _buildTab("Audio", false),
           _buildTab("Video", false),
           _buildTab("Photo", false),
-          _buildTab("Location", false),
         ],
       ),
     );
@@ -159,175 +333,10 @@ class EvidenceLockerScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildEvidenceList() {
-    return Column(
-      children: [
-        _buildMediaCard(
-          title: "SOS Activated",
-          color: const Color(0xFFDC2626),
-          content: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    flex: 9,
-                    child: Container(
-                      height: 70,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFEE2E2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          const SizedBox(width: 12),
-                          const Icon(Icons.play_arrow_rounded, color: Colors.black, size: 28),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: CustomPaint(
-                              painter: WaveformPainter(),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    flex: 4,
-                    child: Container(
-                      height: 70,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Stack(
-                        children: [
-                          Positioned.fill(
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: CustomPaint(painter: MapRoutePainter()),
-                            ),
-                          ),
-                          const Center(
-                            child: Icon(Icons.location_on, color: Color(0xFFDC2626), size: 22),
-                          )
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Text("Location at 12:38 PM", style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.w500)),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        _buildMediaCard(
-          title: "Scream Detected",
-          color: const Color(0xFFDC2626),
-          content: Container(
-            height: 140,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.black87,
-              borderRadius: BorderRadius.circular(12),
-              image: const DecorationImage(
-                image: NetworkImage("https://images.unsplash.com/photo-1541703775677-9df0f4e3cd09?q=80&w=600&auto=format&fit=crop"),
-                fit: BoxFit.cover,
-              ),
-            ),
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.8),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.play_arrow_rounded, color: Colors.black, size: 30),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        _buildMediaCard(
-          title: "Manual Recording",
-          color: const Color(0xFF8B5CF6),
-          content: Row(
-            children: [
-              Expanded(
-                flex: 2,
-                child: Container(
-                  height: 100,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    image: const DecorationImage(
-                      image: NetworkImage("https://images.unsplash.com/photo-1509927083803-4bd519298ac4?q=80&w=400&auto=format&fit=crop"),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                flex: 1,
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Container(
-                            height: 46,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              image: const DecorationImage(
-                                image: NetworkImage("https://images.unsplash.com/photo-1621252179022-d17a7a5ea7da?q=80&w=200&auto=format&fit=crop"),
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Container(
-                            height: 46,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              image: const DecorationImage(
-                                image: NetworkImage("https://images.unsplash.com/photo-1517730107246-87e35fbb9bb2?q=80&w=200&auto=format&fit=crop"),
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      height: 46,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        image: const DecorationImage(
-                          image: NetworkImage("https://images.unsplash.com/photo-1456315502747-d58bd6d33cd1?q=80&w=400&auto=format&fit=crop"),
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildMediaCard({
     required String title,
     required Color color,
+    required EvidenceItem item,
     required Widget content,
   }) {
     return Container(
@@ -367,11 +376,11 @@ class EvidenceLockerScreen extends StatelessWidget {
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.verified_rounded, color: Colors.black, size: 12),
+                                const Icon(Icons.lock_rounded, color: Colors.black, size: 10),
                                 const SizedBox(width: 4),
                                 Text(
-                                  "Verified",
-                                  style: GoogleFonts.inter(color: Colors.black, fontSize: 11, fontWeight: FontWeight.bold),
+                                  "SECURE",
+                                  style: GoogleFonts.inter(color: Colors.black, fontSize: 10, fontWeight: FontWeight.bold),
                                 ),
                               ],
                             ),
@@ -390,55 +399,4 @@ class EvidenceLockerScreen extends StatelessWidget {
       ),
     );
   }
-}
-
-class WaveformPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    var paint = Paint()
-      ..color = Colors.black
-      ..strokeWidth = 2
-      ..strokeCap = StrokeCap.round;
-
-    double spacing = 5;
-    int count = (size.width / spacing).floor();
-    List<double> heights = [0.2, 0.4, 0.6, 0.3, 0.8, 0.5, 0.9, 0.6, 0.3, 0.7, 0.4, 0.5, 0.8, 0.4, 0.2, 0.6, 0.9, 0.6, 0.4, 0.7, 0.3, 0.6, 0.2, 0.8, 0.4, 0.3, 0.6, 0.2, 0.4, 0.7, 0.3, 0.5, 0.2, 0.8, 0.5, 0.3];
-    
-    for (int i = 0; i < count; i++) {
-      double heightFactor = heights[i % heights.length];
-      double barHeight = size.height * heightFactor * 0.7;
-      double x = i * spacing;
-      canvas.drawLine(
-        Offset(x, (size.height - barHeight) / 2),
-        Offset(x, (size.height + barHeight) / 2),
-        paint,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class MapRoutePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    var paint = Paint()
-      ..color = const Color(0xFF8B5CF6)
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-
-    var path = Path();
-    path.moveTo(size.width * 0.2, size.height * 0.8);
-    path.lineTo(size.width * 0.4, size.height * 0.5);
-    path.lineTo(size.width * 0.6, size.height * 0.3);
-    path.lineTo(size.width * 0.8, size.height * 0.5);
-    
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

@@ -3,16 +3,19 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:record/record.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
+import 'package:uuid/uuid.dart';
 import '../../../core/constants/app_colors.dart';
 import 'sos_history_screen.dart';
+import '../../map/views/map_screen.dart';
+import '../services/recording_manager.dart';
+import '../../evidence_locker/services/evidence_storage_service.dart';
+import '../../evidence_locker/models/evidence_item.dart';
 import '../../profile/views/profile_screen.dart';
 import '../../sos/views/sos_active_screen.dart';
 import '../../guardian/views/guardian_call_screen.dart';
 import '../../evidence_locker/views/evidence_locker_screen.dart';
-import '../../map/views/map_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -24,7 +27,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   late AnimationController _pulseController;
   late AnimationController _glowController;
-  late AudioRecorder _recorder;
+  final RecordingManager _recordingManager = RecordingManager();
+  final EvidenceStorageService _evidenceService = EvidenceStorageService();
   StreamSubscription? _accelerometerSubscription;
   bool _isRecording = false;
   bool _isLocationEnabled = true;
@@ -41,7 +45,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _recorder = AudioRecorder();
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
@@ -56,26 +59,21 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   Future<void> _startRecording() async {
-    if (await _recorder.hasPermission()) {
-      if (_isRecording) return;
-      
-      final directory = await getApplicationDocumentsDirectory();
-      final path = '${directory.path}/scream_evidence_${DateTime.now().millisecondsSinceEpoch}.m4a';
-      
-      await _recorder.start(const RecordConfig(encoder: AudioEncoder.aacLc), path: path);
-      
+    if (_isRecording) return;
+    
+    await _recordingManager.startRecording();
+    
+    if (_recordingManager.lastRecordedFilePath != null) {
       setState(() {
         _isRecording = true;
         _dragOffset = 0;
       });
 
-      // Haptic confirmation
       HapticFeedback.heavyImpact();
       Future.delayed(const Duration(milliseconds: 100), () => HapticFeedback.heavyImpact());
 
-      // Start "Scream Detection" (Volume threshold for mockup)
-      _amplitudeSubscription = _recorder.onAmplitudeChanged(const Duration(milliseconds: 200)).listen((amp) {
-        if (amp.current > -15) { // Threshold for "distress"
+      _amplitudeSubscription = _recordingManager.onAmplitudeChanged(const Duration(milliseconds: 200)).listen((amp) {
+        if (amp.current > -15) {
           if (!_isScreamDetected) {
             setState(() => _isScreamDetected = true);
             HapticFeedback.vibrate();
@@ -87,7 +85,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           }
         }
       });
-
     } else {
       _showPermissionDeniedDialog();
     }
@@ -130,15 +127,32 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   Future<void> _stopRecordingAndTriggerSOS() async {
-    await _recorder.stop();
+    final path = await _recordingManager.stopRecording();
     _amplitudeSubscription?.cancel();
     _shakeCountdownTimer?.cancel();
     _shakeCountdownTimer = null;
+    
     setState(() {
       _isRecording = false;
       _isScreamDetected = false;
     });
+
+    if (path != null) {
+      await _saveAudioEvidence(path);
+    }
     _triggerSOS("Recording Stopped / Manual Trigger");
+  }
+
+  Future<void> _saveAudioEvidence(String path) async {
+    final item = EvidenceItem(
+      id: const Uuid().v4(),
+      type: EvidenceType.audio,
+      path: path,
+      timestamp: DateTime.now(),
+      location: "13.0827, 80.2707", // Mock GPS
+      description: _isScreamDetected ? "Scream Detection Triggered" : "Manual SOS Recording",
+    );
+    await _evidenceService.saveEvidence(item);
   }
 
   void _handleShakeDetection() {
@@ -177,7 +191,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     });
   }
 
-
   void _triggerSOS(String source) {
     setState(() {
       _tapCount = 0;
@@ -205,7 +218,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _pulseController.dispose();
     _glowController.dispose();
     _accelerometerSubscription?.cancel();
-    _recorder.dispose();
+    _recordingManager.dispose();
     _tapTimer?.cancel();
     super.dispose();
   }
@@ -775,25 +788,25 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: Colors.white, size: 20),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
-          ),
-        ],
-      ),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4)),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: Colors.white, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+            ),
+          ],
+        ),
       ),
     );
   }
