@@ -14,9 +14,7 @@ import '../../evidence_locker/services/evidence_storage_service.dart';
 import '../../evidence_locker/models/evidence_item.dart';
 import '../../profile/views/profile_screen.dart';
 import '../../sos/views/sos_active_screen.dart';
-import '../../guardian/views/guardian_call_screen.dart';
 import '../../guardian/views/fake_incoming_call_screen.dart';
-import '../../legal/views/legal_rights_consent_screen.dart';
 import 'app_guide_screen.dart';
 import '../../evidence_locker/views/evidence_locker_screen.dart';
 
@@ -30,6 +28,29 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   late AnimationController _pulseController;
   late AnimationController _glowController;
+  int _recordingSeconds = 0;
+  Timer? _recordingTimer;
+
+  void _startRecordingTimer() {
+    _recordingSeconds = 0;
+    _recordingTimer?.cancel();
+    _recordingTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted && _isRecording) {
+        setState(() {
+          _recordingSeconds++;
+        });
+      } else {
+        timer.cancel();
+      }
+    });
+  }
+
+  String _formatTimer(int seconds) {
+    int minutes = seconds ~/ 60;
+    int remainingSeconds = seconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
+  }
+
   final RecordingManager _recordingManager = RecordingManager();
   final EvidenceStorageService _evidenceService = EvidenceStorageService();
   StreamSubscription? _accelerometerSubscription;
@@ -73,6 +94,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       });
 
       HapticFeedback.heavyImpact();
+      _startRecordingTimer();
       Future.delayed(const Duration(milliseconds: 100), () => HapticFeedback.heavyImpact());
 
       _amplitudeSubscription = _recordingManager.onAmplitudeChanged(const Duration(milliseconds: 200)).listen((amp) {
@@ -135,10 +157,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _amplitudeSubscription?.cancel();
     _shakeCountdownTimer?.cancel();
     _shakeCountdownTimer = null;
+    _recordingTimer?.cancel();
+    _recordingTimer = null;
     
     setState(() {
       _isRecording = false;
       _isScreamDetected = false;
+      _recordingSeconds = 0;
     });
 
     if (path != null) {
@@ -165,6 +190,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     
     _startRecording();
     _shakeCountdown = 60;
+    _startRecordingTimer();
     _shakeCountdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) return;
       setState(() {
@@ -206,17 +232,19 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   void _handleSOSClick() {
     if (_isRecording) {
-      // Double-tap to stop recording
-      setState(() {
-        _tapCount++;
+      // Immediate Double-tap detection
+      _tapCount++;
+      if (_tapCount == 1) {
         _tapTimer?.cancel();
-        _tapTimer = Timer(const Duration(milliseconds: 400), () {
-          if (_tapCount >= 2) {
-            _stopRecordingAndTriggerSOS();
-          }
+        _tapTimer = Timer(const Duration(milliseconds: 300), () {
           setState(() => _tapCount = 0);
         });
-      });
+      } else if (_tapCount >= 2) {
+        _tapTimer?.cancel();
+        _tapCount = 0;
+        HapticFeedback.heavyImpact();
+        _stopRecordingAndTriggerSOS();
+      }
     } else {
       // Triple-tap to trigger normal SOS
       setState(() {
@@ -460,19 +488,19 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 alignment: Alignment.center,
                 clipBehavior: Clip.none,
                 children: [
-                   // Outer Pulse Ring
+                   // Outer Breathing Glow (Replaces scaling pulse)
                   if (_isRecording)
                     AnimatedBuilder(
-                      animation: _pulseController,
+                      animation: _glowController,
                       builder: (context, child) {
                         return Container(
-                          width: 180 + (_pulseController.value * 40),
-                          height: 180 + (_pulseController.value * 40),
+                          width: 210,
+                          height: 210,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: (_isScreamDetected ? Colors.orange : AppColors.sosRed).withValues(alpha: 1 - _pulseController.value),
-                              width: 4,
+                              color: (_isScreamDetected ? Colors.orange : AppColors.sosRed).withValues(alpha: 0.1 + (_glowController.value * 0.3)),
+                              width: 12,
                             ),
                           ),
                         );
@@ -538,9 +566,18 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
                   if (_isRecording)
                     Positioned(
-                      bottom: -60,
+                      bottom: -80,
                       child: Column(
                         children: [
+                          Text(
+                            _formatTimer(_recordingSeconds),
+                            style: GoogleFonts.jetBrainsMono(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.sosRed,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -552,16 +589,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                const SizedBox(width: 8),
                                Text(
                                  _shakeCountdownTimer != null 
-                                   ? "Shake SOS: ${_shakeCountdown}s" 
-                                   : "🎤 Recording...",
-                                 style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: AppColors.sosRed),
+                                   ? "SHAKE TRIGGERED" 
+                                   : "RECORDING ACTIVE",
+                                 style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w900, color: AppColors.sosRed, letterSpacing: 1),
                                ),
                             ],
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            "Tap to stop & send SOS",
-                            style: GoogleFonts.inter(fontSize: 11, color: AppColors.textSecondary),
+                            "Double-tap SOS to stop & send",
+                            style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
                           ),
                         ],
                       ),

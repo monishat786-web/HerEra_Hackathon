@@ -18,5 +18,14 @@ class Settings(BaseSettings):
         "DATABASE_URL", 
         f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_SERVER}:{POSTGRES_PORT}/{POSTGRES_DB}"
     )
+    
+    # SMTP Config
+    SMTP_HOST: str = os.getenv("SMTP_HOST", "smtp.gmail.com")
+    SMTP_PORT: int = int(os.getenv("SMTP_PORT", 587))
+    SMTP_SECURE: bool = os.getenv("SMTP_SECURE", "false").lower() == "true"
+    SMTP_USER: str = os.getenv("SMTP_USER", "")
+    SMTP_PASS: str = os.getenv("SMTP_PASS", "")
+    SMTP_FROM: str = os.getenv("SMTP_FROM", "herera.safety@gmail.com")
+    EMERGENCY_EMAILS: str = os.getenv("EMERGENCY_EMAILS", "archanabakarint@gmail.com,ashwinigurumurthy722@gmail.com")
 
 settings = Settings()

@@ -56,19 +56,15 @@ class EvidenceStorageService {
     await prefs.setString(_storageKey, jsonString);
   }
 
-  Future<bool> deleteEvidence(String id, String secretPassword) async {
-    // Correct logic: Validate password then delete locally and remotely
-    if (secretPassword == "1234") { // Mock secret password validation
-      final items = await getEvidenceItems();
-      items.removeWhere((item) => item.id == id);
-      await _saveItems(items);
-      
-      // Potential remote delete call here
-      // await _apiService.deleteRemoteEvidence(id); 
-      
-      return true;
-    }
-    return false;
+  Future<bool> deleteEvidence(String id) async {
+    final items = await getEvidenceItems();
+    items.removeWhere((item) => item.id == id);
+    await _saveItems(items);
+    
+    // Remote delete call if needed
+    // await _apiService.deleteRemoteEvidence(id); 
+    
+    return true;
   }
 
   Future<void> clearAll() async {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:share_plus/share_plus.dart';
 import '../models/evidence_item.dart';
 import '../services/evidence_storage_service.dart';
 import 'package:intl/intl.dart';
@@ -36,14 +37,31 @@ class _EvidenceLockerScreenState extends State<EvidenceLockerScreen> {
 
   Future<void> _togglePlayback(String path) async {
     if (_playingPath == path) {
-      await _audioPlayer.stop();
-      setState(() => _playingPath = null);
+      if (_audioPlayer.state == PlayerState.playing) {
+        await _audioPlayer.pause();
+      } else {
+        await _audioPlayer.resume();
+      }
+      setState(() {});
     } else {
+      await _audioPlayer.stop();
       await _audioPlayer.play(DeviceFileSource(path));
       setState(() => _playingPath = path);
       _audioPlayer.onPlayerComplete.listen((event) {
         if (mounted) setState(() => _playingPath = null);
       });
+    }
+  }
+
+  Future<void> _shareEvidence(EvidenceItem item) async {
+    try {
+      await Share.shareXFiles([XFile(item.path)], text: 'HerERA Safety Evidence - ${item.description ?? "Recorded Audio"}');
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error sharing file: $e"), backgroundColor: Colors.red),
+        );
+      }
     }
   }
 
@@ -138,7 +156,7 @@ class _EvidenceLockerScreenState extends State<EvidenceLockerScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (item.type == EvidenceType.audio)
-              _buildAudioPlayer(item.path),
+              _buildAudioPlayer(item),
             const SizedBox(height: 12),
             Row(
               children: [
@@ -155,11 +173,6 @@ class _EvidenceLockerScreenState extends State<EvidenceLockerScreen> {
                   color: item.isSynced ? Colors.green : Colors.orange,
                 ),
                 const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: () => _confirmDelete(context, item.id),
-                  child: const Icon(Icons.delete_outline_rounded, size: 18, color: Colors.grey),
-                ),
-                const SizedBox(width: 12),
                 Text(
                   DateFormat('HH:mm a').format(item.timestamp),
                   style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.w500),
@@ -179,62 +192,84 @@ class _EvidenceLockerScreenState extends State<EvidenceLockerScreen> {
     );
   }
 
-  Widget _buildAudioPlayer(String path) {
-    bool isPlaying = _playingPath == path;
+  Widget _buildAudioPlayer(EvidenceItem item) {
+    String path = item.path;
+    bool isPlayingItem = _playingPath == path;
+    bool isActuallyPlaying = isPlayingItem && _audioPlayer.state == PlayerState.playing;
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(12),
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
       ),
-      child: Row(
+      child: Column(
         children: [
-          GestureDetector(
-            onTap: () => _togglePlayback(path),
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: const BoxDecoration(
-                color: Colors.black,
-                shape: BoxShape.circle,
+          Row(
+            children: [
+              // Play/Pause - Purple
+              GestureDetector(
+                onTap: () => _togglePlayback(path),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF8B5CF6), // Purple
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    isActuallyPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                ),
               ),
-              child: Icon(
-                isPlaying ? Icons.stop_rounded : Icons.play_arrow_rounded,
-                color: Colors.white,
-                size: 24,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      isPlaying ? "Playing..." : "Record snippet",
-                      style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold),
+                      isActuallyPlaying ? "Playing Evidence..." : "Safety Recording",
+                      style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.bold),
                     ),
-                    Text(
-                      isPlaying ? "LIVE" : "0:12", // Mock duration
-                      style: GoogleFonts.inter(fontSize: 10, color: Colors.grey),
+                    const SizedBox(height: 6),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(2),
+                      child: LinearProgressIndicator(
+                        value: isActuallyPlaying ? null : 0.0,
+                        backgroundColor: Colors.grey[200],
+                        valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF8B5CF6)),
+                        minHeight: 4,
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(2),
-                  child: LinearProgressIndicator(
-                    value: isPlaying ? null : 0.0,
-                    backgroundColor: Colors.grey[300],
-                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.black),
-                    minHeight: 4,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Divider(height: 1, color: Colors.grey.withValues(alpha: 0.1)),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              // Share Button - Pink
+              IconButton(
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                icon: const Icon(Icons.share_rounded, color: Color(0xFFDB2777), size: 20),
+                onPressed: () => _shareEvidence(item),
+              ),
+              const SizedBox(width: 8),
+              // Delete Button - Red
+              IconButton(
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFDC2626), size: 20),
+                onPressed: () => _confirmDelete(context, item.id),
+              ),
+            ],
           ),
         ],
       ),
@@ -420,33 +455,16 @@ class _EvidenceLockerScreenState extends State<EvidenceLockerScreen> {
   }
 
   Future<void> _confirmDelete(BuildContext screenContext, String id) async {
-    final TextEditingController passwordController = TextEditingController();
     return showDialog(
       context: screenContext,
       builder: (dialogContext) => AlertDialog(
         title: Text(
-          "Permanent Deletion",
+          "Delete Evidence",
           style: GoogleFonts.quicksand(fontWeight: FontWeight.bold),
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Enter your Secret Deletion Password to remove this evidence permanently.",
-              style: GoogleFonts.inter(fontSize: 14),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: passwordController,
-              obscureText: true,
-              decoration: InputDecoration(
-                hintText: "Secret Password",
-                prefixIcon: const Icon(Icons.lock_rounded),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-            ),
-          ],
+        content: Text(
+          "Are you sure you want to permanently delete this evidence? This action cannot be undone.",
+          style: GoogleFonts.inter(fontSize: 14),
         ),
         actions: [
           TextButton(
@@ -455,7 +473,7 @@ class _EvidenceLockerScreenState extends State<EvidenceLockerScreen> {
           ),
           ElevatedButton(
             onPressed: () async {
-              final success = await _storageService.deleteEvidence(id, passwordController.text);
+              final success = await _storageService.deleteEvidence(id);
               if (dialogContext.mounted) Navigator.pop(dialogContext);
               
               if (success) {
@@ -464,17 +482,12 @@ class _EvidenceLockerScreenState extends State<EvidenceLockerScreen> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text("Evidence deleted successfully"), backgroundColor: Colors.black87),
                 );
-              } else {
-                if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Incorrect secret password"), backgroundColor: Colors.red),
-                );
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: const Color(0xFFDC2626), // Red
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             child: Text("DELETE", style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
           ),

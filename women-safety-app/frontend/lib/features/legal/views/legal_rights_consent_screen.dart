@@ -112,7 +112,7 @@ class _LegalRightsConsentScreenState extends State<LegalRightsConsentScreen> {
                         const SizedBox(height: 32),
                         _buildActsSectionTitle(),
                         const SizedBox(height: 16),
-                        ..._indianActs.map((act) => _buildActCard(act)).toList(),
+                        ..._indianActs.map((act) => _buildActCard(act)),
                         _buildDisclaimer(),
                         const SizedBox(height: 40),
                       ],
