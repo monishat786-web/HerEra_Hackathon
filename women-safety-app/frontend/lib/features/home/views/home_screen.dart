@@ -15,6 +15,9 @@ import '../../evidence_locker/models/evidence_item.dart';
 import '../../profile/views/profile_screen.dart';
 import '../../sos/views/sos_active_screen.dart';
 import '../../guardian/views/guardian_call_screen.dart';
+import '../../guardian/views/fake_incoming_call_screen.dart';
+import '../../legal/views/legal_rights_consent_screen.dart';
+import 'app_guide_screen.dart';
 import '../../evidence_locker/views/evidence_locker_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -751,7 +754,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   icon: Icons.phone_callback_rounded,
                   label: "Fake Call",
                   color: AppColors.primary,
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const GuardianCallScreen())),
+                  onTap: () {
+                    final caller = (DateTime.now().second % 2 == 0) ? "Mom" : "Dad";
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => FakeIncomingCallScreen(callerName: caller),
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(width: 12),
                 _buildActionBtn(
@@ -774,6 +785,18 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   color: AppColors.primary,
                   onTap: () => ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text("Live Location Sharing Activated!"), backgroundColor: AppColors.mintGreen),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                _buildActionBtn(
+                  icon: Icons.auto_awesome_rounded,
+                  label: "App Guide",
+                  color: AppColors.primary,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AppGuideScreen(),
+                    ),
                   ),
                 ),
               ],
@@ -799,11 +822,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: Colors.white, size: 20),
+            Icon(icon, color: Colors.black, size: 20),
             const SizedBox(width: 8),
             Text(
               label,
-              style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+              style: GoogleFonts.inter(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 14),
             ),
           ],
         ),
