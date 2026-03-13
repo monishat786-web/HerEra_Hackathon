@@ -71,6 +71,14 @@ class _EvidenceLockerScreenState extends State<EvidenceLockerScreen> {
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.sync_rounded, color: Colors.blueAccent),
+            tooltip: "Sync with Cloud",
+            onPressed: () async {
+              await _storageService.syncAll();
+              _loadEvidence();
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.refresh_rounded, color: Colors.black87),
             onPressed: _loadEvidence,
           ),
@@ -141,6 +149,17 @@ class _EvidenceLockerScreenState extends State<EvidenceLockerScreen> {
                   style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.w500),
                 ),
                 const Spacer(),
+                Icon(
+                  item.isSynced ? Icons.cloud_done_rounded : Icons.cloud_off_rounded,
+                  size: 14,
+                  color: item.isSynced ? Colors.green : Colors.orange,
+                ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () => _confirmDelete(context, item.id),
+                  child: const Icon(Icons.delete_outline_rounded, size: 18, color: Colors.grey),
+                ),
+                const SizedBox(width: 12),
                 Text(
                   DateFormat('HH:mm a').format(item.timestamp),
                   style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.w500),
@@ -396,6 +415,70 @@ class _EvidenceLockerScreenState extends State<EvidenceLockerScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Future<void> _confirmDelete(BuildContext screenContext, String id) async {
+    final TextEditingController passwordController = TextEditingController();
+    return showDialog(
+      context: screenContext,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(
+          "Permanent Deletion",
+          style: GoogleFonts.quicksand(fontWeight: FontWeight.bold),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Enter your Secret Deletion Password to remove this evidence permanently.",
+              style: GoogleFonts.inter(fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: passwordController,
+              obscureText: true,
+              decoration: InputDecoration(
+                hintText: "Secret Password",
+                prefixIcon: const Icon(Icons.lock_rounded),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text("CANCEL", style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final success = await _storageService.deleteEvidence(id, passwordController.text);
+              if (dialogContext.mounted) Navigator.pop(dialogContext);
+              
+              if (success) {
+                _loadEvidence();
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Evidence deleted successfully"), backgroundColor: Colors.black87),
+                );
+              } else {
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Incorrect secret password"), backgroundColor: Colors.red),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: Text("DELETE", style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+          ),
+        ],
       ),
     );
   }
